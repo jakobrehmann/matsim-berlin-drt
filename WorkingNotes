@@ -5,3 +5,14 @@ https://github.com/matsim-org/matsim-maas
 https://github.com/jfbischoff/drt-melbourne
 
 Test
+
+### A ###
+1) Run 1% with pt
+2) Calculate Freespeed per link per hour
+OUTPUT - (Link,Freespeed)
+### B ###
+1) Remove pt Routes (161)
+
+stop can only have pt,walk
+fork codeexamples lade nagel, 
+
