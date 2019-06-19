@@ -6,7 +6,9 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.IntermodalAccessEgressPar
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contrib.av.intermodal.router.VariableAccessTransitRouterModule;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtControlerCreator;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
@@ -20,13 +22,13 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.Controler;
 
 
 public class WriteConfig {
 	static Path vehiclesFile = Paths.get(".\\scenarios\\berlin\\input\\taxis_10.xml");
 	static Path basicConfig = Paths.get("C:\\Users\\jakob\\git\\matsim-code-examples\\scenarios\\equil\\config.xml");
-	
 	public static void main(String[] args) {
 		
 		Config config = ConfigUtils.loadConfig(basicConfig.toString()) ;
@@ -37,7 +39,7 @@ public class WriteConfig {
 		config.controler().setOutputDirectory(".\\output");
 		
 		// Scoring
-		ModeParams paramsDrt = new ModeParams("drt");
+		ModeParams paramsDrt = new ModeParams(TransportMode.drt);
 		config.planCalcScore().addModeParams(paramsDrt);
 		
 		// Routing
@@ -106,6 +108,10 @@ public class WriteConfig {
 //		Controler controler = DrtControlerCreator.createControlerWithSingleModeDrt(fullConfig, otfvis);
 		
 		new ConfigWriter(config).write(".\\scenarios\\berlin\\input\\config.xml");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		org.matsim.core.controler.Controler controler = DrtControlerCreator.createControler(config, false);
+		controler.addOverridingModule(new VariableAccessTransitRouterModule());
+		controler.run();
 
 	}
 

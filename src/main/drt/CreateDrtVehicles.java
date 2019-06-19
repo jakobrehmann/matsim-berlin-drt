@@ -77,6 +77,7 @@ public class CreateDrtVehicles {
 			vehicles.add(v);
 
 		}
+		
 		new VehicleWriter(vehicles).write(taxisFile);
 	}
 

@@ -12,6 +12,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -29,14 +30,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RunPlaygroundPt{
+public class RunPlaygroundLarge{
 	
 	public static void main(String[] args) {
 	
-			Config config = ConfigUtils.createConfig() ;
+			Config config = ConfigUtils.loadConfig("C:\\Users\\jakob\\git\\matsim-example-project\\scenarios\\equil\\config.xml");
 	
-			config.controler().setOutputDirectory( ".\\scenarios\\playground\\output");
-			config.controler().setLastIteration( 0 );
+			
 	
 			Scenario scenario = ScenarioUtils.createScenario( config );
 			// don't load anything
@@ -118,7 +118,7 @@ public class RunPlaygroundPt{
 			scenario.getNetwork().addLink( loopLink0 );
 	
 			Link loopLinkLast = nf.createLink( Id.createLinkId( "loopLinkLast" ), nodeLast, nodeLast ) ;
-			loopLink0.setLength( 100. );
+			loopLinkLast.setLength( 100. );
 			scenario.getNetwork().addLink( loopLinkLast );
 	
 			Link longTransitLink = nf.createLink( Id.createLinkId( "longTransitLink" ), node0, nodeLast ) ;
@@ -175,10 +175,13 @@ public class RunPlaygroundPt{
 			
 			ConfigWriter cw = new ConfigWriter(scenario.getConfig());
 			cw.write(".\\scenarios\\playground\\input\\configPt.xml");
+			config.controler().setOutputDirectory( ".\\scenarios\\playground\\output");
+			config.controler().setLastIteration( 10 );
+			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 			
 			
-//			Controler controler = new Controler( scenario ) ;
-//			controler.run() ;
+			Controler controler = new Controler( scenario ) ;
+			controler.run() ;
 		}
 
 	private static void addLinkAndFacility( Scenario scenario, NetworkFactory nf, ActivityFacilitiesFactory ff, Node prevNode, Node node ){

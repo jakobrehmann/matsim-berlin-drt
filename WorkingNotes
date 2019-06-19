@@ -4,18 +4,48 @@ Relevant Repositories
 https://github.com/matsim-org/matsim-maas
 https://github.com/jfbischoff/drt-melbourne
 
-Test
+Project Outline (as of June 19, 2019) 
+*** A : Set up Network ***
+	--> Download 10% Events File Berlin -- https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.3-10pct/output-berlin-v5.3-10pct/
+	--> For each time slice (0:00, 1:00, 2:00...) & For each link: 
+		--> document link enter event and link leave event
+	  	--> calculate travel times on link
+	  	--> find average travel time per link per time slice
+	  	--> find congested freespeed by dividing by link length
+	--> create time dependent network, where freespeeds change each hour.
+	--> pt : delete bus routes from Fronau  	
 
-### A ###
-1) Run 1% with pt
-2) Calculate Freespeed per link per hour
-OUTPUT - (Link,Freespeed)
+
+*** B : Define our Population ***
+	--> Create Shapefile of Fronau
+	--> Delete all People who do not have main activity in Frohnau. 
+
+*** C : Set up DRT ***
+	--> Generate drt vehicles
+	--> Modify S-Fronau with attribute : drtAccessible
+
+*** D : Run ***
+	--> Set up config
+	--> Run
+
+*** E : Analysis ***
+	--> How did travel times change for subpop
+	--> how many pt legs vs. car legs
+	
 ### B ###
 1) Remove pt Routes (161)
 
 stop can only have pt,walk
 
 Make Network
+-add attribute to stations: DRTStation
+-allow DRT mode on links in Frohnau
+-add DRT stop facilities? 
+Add DRT vehicles
+Configure Routing
+Configure QSim
+Configure Scoring?
+
 Test Multimodal access egress to train stations (with bike, for instance)
 Test DRT
 Test combination
