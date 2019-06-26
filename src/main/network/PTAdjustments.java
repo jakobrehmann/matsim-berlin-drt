@@ -77,19 +77,20 @@ public class PTAdjustments {
 			// Request TransitLine
 			TransitLine Bus125 = scenario.getTransitSchedule().getTransitLines().get(Id.create("17306_700",TransitLine.class));
 			
+			Bus125.removeRoute(route)
+			
 			// Remove stop of this facility in all existing routes
 			for (TransitRoute route : Bus125.getRoutes().values()) {
 				TransitRouteStop stop = route.getStop(facility);
 				
 				String routeId = route.getId().toString();
 				
-				// Not all routes contain all stop facilities, therefore exceptionhandler is needed				
-				try {
+				// Not all routes contain all stop facilities, therefore exception handler is needed
+				
+				if (stop != null){
+						
 					route.getStops().remove(stop);
-				}
-				finally{
-					System.out.println("Route" + routeId + " does not contain Stop " + facilityId + "!");
-				}
+					
 				
 			}
 		}
