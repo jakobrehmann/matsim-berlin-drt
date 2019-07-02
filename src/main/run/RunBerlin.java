@@ -177,6 +177,7 @@ public class RunBerlin {
 //        config.plansCalcRoute().getModeRoutingParams().get(TransportMode.bike).setTeleportedModeSpeed(10.);
 
         config.qsim().setEndTime(24. * 3600.);
+        config.qsim().setNumberOfThreads(1);
 
         config.transit().setUseTransit(true);
 
