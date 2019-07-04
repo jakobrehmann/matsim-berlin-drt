@@ -3,10 +3,13 @@ package main.run;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import org.apache.log4j.Logger;
 import org.matsim.analysis.ScoreStats;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Population;
@@ -15,7 +18,9 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
+import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryLogging;
@@ -23,6 +28,15 @@ import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehiclesFactory;
+
+/** Mode zoomer now can be found in output files! However, only some people use zoomer for access/egress. in reality, everyone should be using it...
+ * One possible reason: In the input plans, the access/egress walks are already as part of the plan. Therefore, many people will only start switching
+ * to zoomer if we have a large number of iterations, where different combinations can be tried out.
+ * Therefore 0 iterations will never show zoomer. 
+ *
+ */
 
 
 public class RunBerlinBike5 {
@@ -34,8 +48,7 @@ public class RunBerlinBike5 {
         // -- CONFIG --
         Config config = ConfigUtils.loadConfig( configFileName); //, customModules ) ; // I need this to set the context
 
-        config.controler().setLastIteration(0); // jr
-        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\output");
+
 //        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
 //        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
@@ -49,13 +62,27 @@ public class RunBerlinBike5 {
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
+        config.global().setNumberOfThreads( 1 );
+
+        config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
+        config.qsim().setTrafficDynamics( QSimConfigGroup.TrafficDynamics.kinematicWaves );
+        config.qsim().setVehiclesSource( QSimConfigGroup.VehiclesSource.modeVehicleTypesFromVehiclesData );
+        config.qsim().setSimStarttimeInterpretation( QSimConfigGroup.StarttimeInterpretation.onlyUseStarttime );
+
+        config.transit().setUseTransit(true) ;
+
+        config.controler().setLastIteration(5); // jr
+        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\output");
+
+
         // Introducing Zoomer!
 
         PlanCalcScoreConfigGroup.ModeParams zoomParams = new PlanCalcScoreConfigGroup.ModeParams("zoomer");
         zoomParams.setMarginalUtilityOfTraveling(0.);
         config.planCalcScore().addModeParams(zoomParams);
 
-        PlansCalcRouteConfigGroup.ModeRoutingParams zoomRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams("zoomer");
+        PlansCalcRouteConfigGroup.ModeRoutingParams zoomRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+        zoomRoutingParams.setMode("zoomer");
         zoomRoutingParams.setBeelineDistanceFactor(1.3);
         zoomRoutingParams.setTeleportedModeSpeed(10000.);
         config.plansCalcRoute().addModeRoutingParams(zoomRoutingParams);
@@ -98,7 +125,7 @@ public class RunBerlinBike5 {
         // Zoomer
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetBike = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetBike.setMode("zoomer");
-        paramSetBike.setRadius(10000000);
+        paramSetBike.setRadius(10000);
         paramSetBike.setPersonFilterAttribute(null);
 //        paramSetBike.setStopFilterAttribute("bikeAccessible");
 //        paramSetBike.setStopFilterValue("true");
@@ -106,6 +133,8 @@ public class RunBerlinBike5 {
 
 //        SwissRailRaptorConfigGroup raptor = configRaptor;
 //        config.addModule(raptor);
+
+
 
 
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
@@ -118,18 +147,44 @@ public class RunBerlinBike5 {
         config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
         config.plansCalcRoute().removeModeRoutingParams("undefined");
 
-        config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
+        PlansCalcRouteConfigGroup.ModeRoutingParams bikeRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams(TransportMode.bike);
+        bikeRoutingParams.setTeleportedModeSpeed(10000.);
+        bikeRoutingParams.setBeelineDistanceFactor(1.3);
+        config.plansCalcRoute().addModeRoutingParams(bikeRoutingParams);
 
+        config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
+        config.qsim().setEndTime( 24.*3600. );
         // vsp defaults
         config.plansCalcRoute().setInsertingAccessEgressWalk( true );
         config.qsim().setUsingTravelTimeCheckInTeleportation( true );
         config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
+        config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
 
 
         config = SetupActivityParams(config);
 
+//        // remove teleportation walk router:
+//        config.plansCalcRoute().removeModeRoutingParams( TransportMode.walk );
+//
+//        // add network walk router:
+//        Set<String> networkModes = new HashSet<>( config.plansCalcRoute().getNetworkModes() );
+//        networkModes.add( TransportMode.walk );
+//        config.plansCalcRoute().setNetworkModes( networkModes );
+
         // --Scenario--
         Scenario scenario = ScenarioUtils.loadScenario( config );
+
+        VehiclesFactory vf = scenario.getVehicles().getFactory();
+        {
+            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.walk, VehicleType.class ) );
+            vehType.setMaximumVelocity( 4./3.6 );
+            scenario.getVehicles().addVehicleType( vehType );
+        }
+        {
+            VehicleType vehTypeZoomer = vf.createVehicleType( Id.create( "zoomer", VehicleType.class ) );
+            vehTypeZoomer.setMaximumVelocity( 3600000./3.6 );
+            scenario.getVehicles().addVehicleType( vehTypeZoomer );
+        }
 
         // --CONTROLER--
         Controler controler = new Controler( scenario );
