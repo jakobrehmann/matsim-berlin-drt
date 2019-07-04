@@ -4,6 +4,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 import java.util.Arrays;
 
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import org.apache.log4j.Logger;
 import org.matsim.analysis.ScoreStats;
 import org.matsim.api.core.v01.Scenario;
@@ -164,14 +165,22 @@ public final class RunBerlinBike4 {
 
         config = ConfigUtils.loadConfig( configFileName, customModules ) ; // I need this to set the context
 
-        config.controler().setLastIteration(0); // jr
-        config.controler().setOutputDirectory("../output");
-        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+        config.controler().setLastIteration(1); // jr
+        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\output");
+//        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
+//        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
+//        config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
+//        config.transit().setTransitScheduleFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-transit-schedule.xml.gz");
+//        config.transit().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5.4-transit-vehicles.xml.gz");
+        config.network().setInputFile("berlin-v5-network.xml.gz");
         config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
-        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
-        config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
-        config.transit().setTransitScheduleFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-transit-schedule.xml.gz");
-        config.transit().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5.4-transit-vehicles.xml.gz");
+        config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
+        config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
+        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
+        config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
+
+
 
 
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
@@ -255,6 +264,30 @@ public final class RunBerlinBike4 {
 
     final Population getPopulation() {
         return controler.getScenario().getPopulation();
+    }
+
+    static SwissRailRaptorConfigGroup createRaptorConfigGroup(int radiusWalk, int radiusBike) {
+        SwissRailRaptorConfigGroup configRaptor = new SwissRailRaptorConfigGroup();
+        configRaptor.setUseIntermodalAccessEgress(true);
+
+        // Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalk.setMode(TransportMode.walk);
+        paramSetWalk.setRadius(radiusWalk);
+        paramSetWalk.setPersonFilterAttribute(null);
+        paramSetWalk.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalk );
+
+        // Bike
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetBike = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetBike.setMode(TransportMode.bike);
+        paramSetBike.setRadius(radiusBike);
+        paramSetBike.setPersonFilterAttribute(null);
+//        paramSetBike.setStopFilterAttribute("bikeAccessible");
+//        paramSetBike.setStopFilterValue("true");
+        configRaptor.addIntermodalAccessEgress(paramSetBike );
+
+        return configRaptor;
     }
 
 }
