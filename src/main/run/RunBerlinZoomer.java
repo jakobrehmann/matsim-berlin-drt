@@ -1,37 +1,25 @@
 package main.run;
 
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import org.apache.log4j.Logger;
-import org.matsim.analysis.ScoreStats;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Population;
-import org.matsim.api.core.v01.population.PopulationFactory;
-import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.*;
-import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.scenario.ScenarioUtils;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.matsim.vehicles.VehicleType;
-import org.matsim.vehicles.VehiclesFactory;
+
 
 /** Mode zoomer is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
  * placeholder mode, which can be configured in order to emulate bike, drt, or other modes.
@@ -61,7 +49,8 @@ public class RunBerlinZoomer {
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
+        config.plans().setInputFile("berlin-plans-Frohnau.xml");
+//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -117,46 +106,6 @@ public class RunBerlinZoomer {
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
-        // PLACEHOLDER : Method to modify population, such that it only includes agents to conduct activities in Frohnau
-//
-//        Population pop = scenario.getPopulation() ;
-//        ArrayList<String> frohnauAgents = readIdFile(agentsFrohnauPath.toString()) ;
-//        Population pop2 = pop.getPersons().values().stream()
-//                .filter(s -> frohnauAgents.contains((s.getId().toString())));
-//
-//        Collection<Person> idSSS = (Collection<Person>) pop.getPersons().values();
-//        for(Iterator<Person> iterator = ((Collection) pop.getPersons().values()).iterator() ; iterator.hasNext() ; ){
-//            Person person = iterator.next() ;
-//            if (frohnauAgents.contains(person.getId().toString())) {
-//                break;
-//            }
-//            iterator.remove();
-////            pop.removePerson(person.getId());
-//        }
-
-
-
-
-//        for (Id<Person> agentId : pop.getPersons().keySet()) {
-//            if(frohnauAgents.contains(agentId.toString())){
-//                break ;
-//            }
-//            pop.removePerson(agentId) ;
-//        }
-
-
-//        VehiclesFactory vf = scenario.getVehicles().getFactory();
-//        {
-//            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.walk, VehicleType.class ) );
-//            vehType.setMaximumVelocity( 4./3.6 );
-//            scenario.getVehicles().addVehicleType( vehType );
-//        }
-//        {
-//            VehicleType vehTypeZoomer = vf.createVehicleType( Id.create( "zoomer", VehicleType.class ) );
-//            vehTypeZoomer.setMaximumVelocity( 3600000./3.6 );
-//            scenario.getVehicles().addVehicleType( vehTypeZoomer );
-//        }
-
         // -- C O N T R O L E R --
         Controler controler = new Controler( scenario );
         controler.addOverridingModule(new SwissRailRaptorModule()); // jr
@@ -170,8 +119,8 @@ public class RunBerlinZoomer {
             }
         } );
 
-        new PopulationWriter(scenario.getPopulation()).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\pop_trial.xml");
-        new ConfigWriter(config).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\config_trial.xml");
+
+//        new ConfigWriter(config).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\config_trial.xml");
         controler.run(); //
 
 

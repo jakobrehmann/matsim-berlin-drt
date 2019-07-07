@@ -51,6 +51,11 @@ public class FrohnauShapeFilter {
         new PopulationReader(sc).readFile(populationInput.toString());
         final Population pop = sc.getPopulation();
 
+        // New Population
+        Scenario sc2 = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        Population pop2 = sc2.getPopulation() ;
+
+
 
         // Read Shapefile
         final Collection<Geometry> geometries = new ArrayList<>();
@@ -83,6 +88,7 @@ public class FrohnauShapeFilter {
                 if (geometries.stream().anyMatch(geom -> geom.contains(MGC.coord2Point(coord)))) {
                     agentsOutsideFrohnau.remove(person.getId().toString());
                     agentsWithinFrohnau.add(person.getId().toString());
+                    pop2.addPerson(person);
                     break;
                 }
 
@@ -95,6 +101,8 @@ public class FrohnauShapeFilter {
         writeIdsToFile(linksOutsideFrohnau, outputDirectory.toString() + "/linksOutsideFrohnau.txt");
         writeIdsToFile(agentsWithinFrohnau, outputDirectory.toString() + "/agentsWithinFrohnau.txt");
         writeIdsToFile(agentsOutsideFrohnau, outputDirectory.toString() + "/agentsOutsideFrohnau.txt");
+
+        new PopulationWriter(sc2.getPopulation()).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\input\\Berlin-plans-Frohnau.xml");
 
     }
 
