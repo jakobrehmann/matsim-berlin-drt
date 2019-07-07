@@ -23,23 +23,39 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 /** Mode zoomer is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
  * placeholder mode, which can be configured in order to emulate bike, drt, or other modes.
+ * TODO: now that I limiked population to Frohnau, no one is using Zoomer. Not sure if it is because of the population
+ *      or because of something else I changed...
+ * TODO: Is there a way to clear the intitial plans? That way, in the 0th iteration during the intial routing, zoomer would
+ *      obviously chosen instead of walk for access and egress
  */
 
 
 public class RunBerlinZoomer {
 
-    static String configFileName = "C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\input\\berlin-v5.4-1pct.config.xml";
-    private static Path agentsFrohnauPath = Paths.get("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\Frohnau\\agentsFrohnau.txt") ;
-
-
-
     public static void main(String[] args) {
+
+        String username = "jakob";
+        String version = "2019-07-05";
+        String rootPath = null;
+
+        switch (username) {
+            case "jakob":
+                rootPath = "C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/";
+                break;
+            case "david":
+                rootPath = "C:/Users/david/ENTER_PATH_HERE";
+                break;
+            default:
+                System.out.println("Incorrect Base Path");
+        }
+
+        String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
 
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName); //, customModules ) ; // I need this to set the context
 
         // Input Files -- from server
-/*        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+/*      config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
         config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
         config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
@@ -49,15 +65,15 @@ public class RunBerlinZoomer {
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-plans-Frohnau.xml");
-//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
+        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
 
-        config.controler().setLastIteration(5);
+        config.controler().setLastIteration(30);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\output");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
@@ -87,6 +103,20 @@ public class RunBerlinZoomer {
 
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
+        config.strategy().setFractionOfIterationsToDisableInnovation(1.); // temp
+        config.strategy().clearStrategySettings();
+        StrategyConfigGroup.StrategySettings ReRoute = new StrategyConfigGroup.StrategySettings();
+        ReRoute.setWeight(1.);
+        ReRoute.setStrategyName("ReRoute");
+        ReRoute.setSubpopulation("person");
+        config.strategy().addStrategySettings(ReRoute);
+
+        StrategyConfigGroup.StrategySettings ReRouteFreight = new StrategyConfigGroup.StrategySettings();
+        ReRouteFreight.setWeight(1.);
+        ReRouteFreight.setStrategyName("ReRoute");
+        ReRouteFreight.setSubpopulation("freight");
+        config.strategy().addStrategySettings(ReRouteFreight);
+
 
         // Zoomer Setup
         PlanCalcScoreConfigGroup.ModeParams zoomParams = new PlanCalcScoreConfigGroup.ModeParams("zoomer");
@@ -195,7 +225,7 @@ public class RunBerlinZoomer {
 
     public static ArrayList<String> readIdFile(String fileName){
         Scanner s ;
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         try {
             s = new Scanner(new File(fileName));
             while (s.hasNext()){
