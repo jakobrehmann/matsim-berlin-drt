@@ -33,15 +33,12 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
-/** Mode zoomer now can be found in output files! However, only some people use zoomer for access/egress. in reality, everyone should be using it...
- * One possible reason: In the input plans, the access/egress walks are already as part of the plan. Therefore, many people will only start switching
- * to zoomer if we have a large number of iterations, where different combinations can be tried out.
- * Therefore 0 iterations will never show zoomer.
- *
+/** Mode zoomer is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
+ * placeholder mode, which can be configured in order to emulate bike, drt, or other modes.
  */
 
 
-public class RunBerlinBike5 {
+public class RunBerlinZoomer {
 
     static String configFileName = "C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\input\\berlin-v5.4-1pct.config.xml";
     private static Path agentsFrohnauPath = Paths.get("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\Frohnau\\agentsFrohnau.txt") ;
@@ -53,15 +50,16 @@ public class RunBerlinBike5 {
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName); //, customModules ) ; // I need this to set the context
 
+        // Input Files -- from server
+/*        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
+        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
+        config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
+        config.transit().setTransitScheduleFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-transit-schedule.xml.gz");
+        config.transit().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5.4-transit-vehicles.xml.gz");
+*/
 
-//        config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
-//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
-//        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
-//        config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
-//        config.transit().setTransitScheduleFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-transit-schedule.xml.gz");
-//        config.transit().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5.4-transit-vehicles.xml.gz");
-
-        // Input Files
+        // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
         config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
@@ -70,7 +68,7 @@ public class RunBerlinBike5 {
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
 
-        config.controler().setLastIteration(5); // jr
+        config.controler().setLastIteration(5);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\output");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
@@ -101,22 +99,7 @@ public class RunBerlinBike5 {
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
 
-
-        // Although ReRoute already exists, I added another ReRoute Module with a high weight, so that more people switch to zoomer
-//        StrategyConfigGroup.StrategySettings strategySettings = new StrategyConfigGroup.StrategySettings();
-//        strategySettings.setStrategyName("ReRoute");
-//        strategySettings.setWeight(2.);
-//        strategySettings.setSubpopulation("person");
-//        config.strategy().addStrategySettings(strategySettings);
-
-//        PlansCalcRouteConfigGroup.ModeRoutingParams bikeRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams(TransportMode.bike);
-//        bikeRoutingParams.setTeleportedModeSpeed(10000.);
-//        bikeRoutingParams.setBeelineDistanceFactor(1.3);
-//        config.plansCalcRoute().addModeRoutingParams(bikeRoutingParams);
-
-
-        // Zoomer Setup(Teleported Mode for Access/Egress to pt Stations)
-
+        // Zoomer Setup
         PlanCalcScoreConfigGroup.ModeParams zoomParams = new PlanCalcScoreConfigGroup.ModeParams("zoomer");
         zoomParams.setMarginalUtilityOfTraveling(0.);
         config.planCalcScore().addModeParams(zoomParams);
@@ -134,6 +117,7 @@ public class RunBerlinBike5 {
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
+        // PLACEHOLDER : Method to modify population, such that it only includes agents to conduct activities in Frohnau
 //
 //        Population pop = scenario.getPopulation() ;
 //        ArrayList<String> frohnauAgents = readIdFile(agentsFrohnauPath.toString()) ;
@@ -187,8 +171,8 @@ public class RunBerlinBike5 {
         } );
 
         new PopulationWriter(scenario.getPopulation()).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\pop_trial.xml");
-//        new ConfigWriter(config).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\config_trial.xml");
-//        controler.run(); // 
+        new ConfigWriter(config).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\config_trial.xml");
+        controler.run(); //
 
 
     }
