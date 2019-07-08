@@ -80,7 +80,7 @@ public class RunBerlinZoomer {
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/C/");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -156,8 +156,50 @@ public class RunBerlinZoomer {
 
 
         // Raptor
-        SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
-        config.addModule(raptor);
+//        SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
+//        config.addModule(raptor);
+        SwissRailRaptorConfigGroup configRaptor = ConfigUtils.addOrGetModule( config, SwissRailRaptorConfigGroup.class ) ;
+        configRaptor.setUseIntermodalAccessEgress(true);
+
+        // Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalk.setMode(TransportMode.walk);
+        paramSetWalk.setRadius(1);
+        paramSetWalk.setPersonFilterAttribute(null);
+        paramSetWalk.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalk );
+
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkA.setMode(TransportMode.access_walk);
+        paramSetWalkA.setRadius(1);
+        paramSetWalkA.setPersonFilterAttribute(null);
+        paramSetWalkA.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
+
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkE.setMode(TransportMode.egress_walk);
+        paramSetWalkE.setRadius(1);
+        paramSetWalkE.setPersonFilterAttribute(null);
+        paramSetWalkE.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
+
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkNN.setMode(TransportMode.transit_walk);
+        paramSetWalkNN.setRadius(1);
+        paramSetWalkNN.setPersonFilterAttribute(null);
+        paramSetWalkNN.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+
+
+        // Zoomer
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetBike = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetBike.setMode("zoomer");
+        paramSetBike.setRadius(10000);
+        paramSetBike.setPersonFilterAttribute(null);
+//        paramSetBike.setStopFilterAttribute("bikeAccessible");
+//        paramSetBike.setStopFilterValue("true");
+        configRaptor.addIntermodalAccessEgress(paramSetBike );
+
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
