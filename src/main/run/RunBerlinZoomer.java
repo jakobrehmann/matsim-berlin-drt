@@ -183,7 +183,7 @@ public class RunBerlinZoomer {
     }
 
 
-    private static Config SetupActivityParams(Config config) {
+    static Config SetupActivityParams(Config config) {
         // activities:
         for ( long ii = 600 ; ii <= 97200; ii+=600 ) {
             final ActivityParams params = new ActivityParams( "home_" + ii + ".0" ) ;
