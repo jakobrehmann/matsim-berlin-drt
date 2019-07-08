@@ -1,8 +1,11 @@
 package main.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
+import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -17,6 +20,7 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scenario.ScenarioUtils;
 
 
@@ -35,7 +39,7 @@ public class RunBerlinZoomer {
     public static void main(String[] args) {
 
         String username = "jakob";
-        String version = "2019-07-05";
+        String version = "2019-07-08";
         String rootPath = null;
 
         switch (username) {
@@ -65,20 +69,22 @@ public class RunBerlinZoomer {
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+//        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
+        config.plans().setInputFile("berlin-downsample.xml"); // 1% population in Frohnau
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
 
-        config.controler().setLastIteration(30);
+        config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\output");
+        config.controler().setOutputDirectory(rootPath + version + "/output/");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
+        config.controler().setWritePlansInterval(5);
 
         // QSim
         config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
@@ -103,24 +109,26 @@ public class RunBerlinZoomer {
 
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
-        config.strategy().setFractionOfIterationsToDisableInnovation(1.); // temp
-        config.strategy().clearStrategySettings();
-        StrategyConfigGroup.StrategySettings ReRoute = new StrategyConfigGroup.StrategySettings();
-        ReRoute.setWeight(1.);
-        ReRoute.setStrategyName("ReRoute");
-        ReRoute.setSubpopulation("person");
-        config.strategy().addStrategySettings(ReRoute);
-
-        StrategyConfigGroup.StrategySettings ReRouteFreight = new StrategyConfigGroup.StrategySettings();
-        ReRouteFreight.setWeight(1.);
-        ReRouteFreight.setStrategyName("ReRoute");
-        ReRouteFreight.setSubpopulation("freight");
-        config.strategy().addStrategySettings(ReRouteFreight);
+//        config.strategy().setFractionOfIterationsToDisableInnovation(1.); // temp
+//        config.strategy().clearStrategySettings();
+//        StrategyConfigGroup.StrategySettings ReRoute = new StrategyConfigGroup.StrategySettings();
+//        ReRoute.setWeight(1.);
+////        ReRoute.setStrategyName("ReRoute");
+////        ReRoute.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute);
+//        ReRoute.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ChangeTripMode);
+//        ReRoute.setSubpopulation("person");
+//        config.strategy().addStrategySettings(ReRoute);
+//
+//        StrategyConfigGroup.StrategySettings ReRouteFreight = new StrategyConfigGroup.StrategySettings();
+//        ReRouteFreight.setWeight(1.);
+//        ReRouteFreight.setStrategyName("ReRoute");
+//        ReRouteFreight.setSubpopulation("freight");
+//        config.strategy().addStrategySettings(ReRouteFreight);
 
 
         // Zoomer Setup
-        PlanCalcScoreConfigGroup.ModeParams zoomParams = new PlanCalcScoreConfigGroup.ModeParams("zoomer");
-        zoomParams.setMarginalUtilityOfTraveling(0.);
+        ModeParams zoomParams = new ModeParams("zoomer");
+        zoomParams.setMarginalUtilityOfTraveling(100);
         config.planCalcScore().addModeParams(zoomParams);
 
         PlansCalcRouteConfigGroup.ModeRoutingParams zoomRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
@@ -128,6 +136,24 @@ public class RunBerlinZoomer {
         zoomRoutingParams.setBeelineDistanceFactor(1.3);
         zoomRoutingParams.setTeleportedModeSpeed(10000.);
         config.plansCalcRoute().addModeRoutingParams(zoomRoutingParams);
+
+        // walk 2 setup
+//        PlansCalcRouteConfigGroup.ModeRoutingParams pars = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+//        pars.setMode("walk2");
+//        pars.setTeleportedModeSpeed(5./3.6);
+        {
+            PlansCalcRouteConfigGroup.ModeRoutingParams wlk = new PlansCalcRouteConfigGroup.ModeRoutingParams(  ) ;
+            wlk.setMode( "walk2" ) ;
+            wlk.setTeleportedModeSpeed( 5./3.6 ) ;
+            config.plansCalcRoute().addModeRoutingParams( wlk );
+        }
+
+
+        double margUtlTravPt = config.planCalcScore().getModes().get( TransportMode.pt ).getMarginalUtilityOfTraveling();
+        ModeParams modePars = new ModeParams("walk2");
+        modePars.setMarginalUtilityOfTraveling(margUtlTravPt);
+        config.planCalcScore().addModeParams( modePars );
+
 
         // Raptor
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
@@ -160,16 +186,25 @@ public class RunBerlinZoomer {
         SwissRailRaptorConfigGroup configRaptor = new SwissRailRaptorConfigGroup();
         configRaptor.setUseIntermodalAccessEgress(true);
 
-        // Walk
-        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-        paramSetWalk.setMode(TransportMode.walk);
-        paramSetWalk.setRadius(1);
-        paramSetWalk.setPersonFilterAttribute(null);
-        paramSetWalk.setStopFilterAttribute(null);
-        configRaptor.addIntermodalAccessEgress(paramSetWalk );
+//        // Walk
+//        IntermodalAccessEgressParameterSet paramSetWalk = new IntermodalAccessEgressParameterSet();
+//        paramSetWalk.setMode(TransportMode.walk);
+//        paramSetWalk.setRadius(1);
+//        paramSetWalk.setPersonFilterAttribute(null);
+//        paramSetWalk.setStopFilterAttribute(null);
+//        configRaptor.addIntermodalAccessEgress(paramSetWalk );
+
+        // Walk 2
+        IntermodalAccessEgressParameterSet paramSetXxx = new IntermodalAccessEgressParameterSet();
+        //					paramSetXxx.setMode( TransportMode.walk ); // this does not work because sbb raptor treats it in a special way
+        paramSetXxx.setMode( "walk2" );
+        paramSetXxx.setRadius( 1000000 );
+        configRaptor.addIntermodalAccessEgress( paramSetXxx );
+        // (in principle, walk as alternative to drt will not work, since drt is always faster.  Need to give the ASC to the router!  However, with
+        // the reduced drt network we should be able to see differentiation.)
 
         // Zoomer
-        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetZoomer = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        IntermodalAccessEgressParameterSet paramSetZoomer = new IntermodalAccessEgressParameterSet();
         paramSetZoomer.setMode("zoomer");
         paramSetZoomer.setRadius(10000000);
         paramSetZoomer.setPersonFilterAttribute(null);
