@@ -114,7 +114,7 @@ public class RunBerlinZoomer {
         config.addModule(raptor);
 
         // Network Change Events
-//        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
+        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );

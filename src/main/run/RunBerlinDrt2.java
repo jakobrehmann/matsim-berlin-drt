@@ -7,10 +7,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.NetworkFactory;
-import org.matsim.api.core.v01.network.Node;
+import org.matsim.api.core.v01.network.*;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
@@ -58,11 +55,11 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * TODO: modify allowed modes on network in order to allocate a service area to mode "drt"
  */
 
-public class drtCodeEx2 {
+public class RunBerlinDrt2 {
 
     enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
     private static DrtMode drtMode = DrtMode.teleportBeeline  ;
-    private static boolean drt2 = true ;
+    private static boolean drt2 = false ;
 
     public static void main(String[] args) {
         String username = "jakob";
@@ -82,7 +79,7 @@ public class drtCodeEx2 {
 
 
         // -- C O N F I G --
-        String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
+        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         config.network().setInputFile("berlin-v5-network.xml.gz");
@@ -94,18 +91,23 @@ public class drtCodeEx2 {
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
+        String FrohnauLinkPath = rootPath + "Input_global/linksWithinFrohnau.txt";
+
 
         // === GBL: ===
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/A/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/B/");
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
         config.transit().setUseTransit(true) ;
+
+        // Network Change Events
+        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
 
 
         // === ROUTER: ===
@@ -116,10 +118,6 @@ public class drtCodeEx2 {
         config.plansCalcRoute().removeModeRoutingParams(TransportMode.pt);
         config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
         config.plansCalcRoute().removeModeRoutingParams("undefined");
-
-//        config.plansCalcRoute().getModeRoutingParams().get( TransportMode.walk ).setTeleportedModeSpeed( 3. );
-//        config.plansCalcRoute().getModeRoutingParams().get( TransportMode.bike ).setTeleportedModeSpeed( 10. );
-
 
         if(  drtMode == DrtMode.teleportBeeline ){// (configure teleportation router)
             PlansCalcRouteConfigGroup.ModeRoutingParams drtParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
@@ -269,11 +267,11 @@ public class drtCodeEx2 {
 
 
         // Currently, drt can use car network, so this is not neccessary
-        // add drt modes to the car links' allowed modes in their respective service area
-//        addModeToAllLinksBtwnGivenNodes(scenario.getNetwork(), 0, 400, TransportMode.drt );
-//        if ( drt2 ){
-//            addModeToAllLinksBtwnGivenNodes( scenario.getNetwork(), 800, 1000, "drt2" );
-//        }
+//         add drt modes to the car links' allowed modes in their respective service area
+        addModeToLinks(scenario.getNetwork(), FrohnauLinkPath,  TransportMode.drt );
+        if ( drt2 ){
+            addModeToLinks( scenario.getNetwork(), FrohnauLinkPath,  "drt2" );
+        }
         // TODO: reference somehow network creation, to ensure that these link ids exist
 
 
@@ -281,11 +279,11 @@ public class drtCodeEx2 {
         VehiclesFactory vf = scenario.getVehicles().getFactory();
         if ( drt2 ) {
             VehicleType vehType = vf.createVehicleType( Id.create( "drt2", VehicleType.class ) );
-            vehType.setMaximumVelocity( 25./3.6 );
+            vehType.setMaximumVelocity( 25/3.6 );
             scenario.getVehicles().addVehicleType( vehType );
         }{
             VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.drt, VehicleType.class ) );
-            vehType.setMaximumVelocity( 25./3.6 );
+            vehType.setMaximumVelocity( 25/3.6 );
             scenario.getVehicles().addVehicleType( vehType );
         }
 //        {
@@ -330,7 +328,8 @@ public class drtCodeEx2 {
         } );
 
 
-        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
+//        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
+//        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
         controler.run();
     }
 
