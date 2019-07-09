@@ -3,12 +3,7 @@ package main.run;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-
+import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.*;
@@ -21,12 +16,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 
 
-/** Mode zoomer is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
- * placeholder mode, which can be configured in order to emulate bike, drt, or other modes.
- * TODO: now that I limiked population to Frohnau, no one is using Zoomer. Not sure if it is because of the population
- *      or because of something else I changed...
- * TODO: Is there a way to clear the intitial plans? That way, in the 0th iteration during the intial routing, zoomer would
- *      obviously chosen instead of walk for access and egress
+/** "Zoomer" is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
+ * placeholder mode, which can be configured in order to emulate bike, drt, etc.
  */
 
 
@@ -35,7 +26,7 @@ public class RunBerlinZoomer {
     public static void main(String[] args) {
 
         String username = "jakob";
-        String version = "2019-07-05";
+        String version = "2019-07-08";
         String rootPath = null;
 
         switch (username) {
@@ -52,7 +43,7 @@ public class RunBerlinZoomer {
         String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
 
         // -- C O N F I G --
-        Config config = ConfigUtils.loadConfig( configFileName); //, customModules ) ; // I need this to set the context
+        Config config = ConfigUtils.loadConfig( configFileName);
 
         // Input Files -- from server
 /*      config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
@@ -65,20 +56,22 @@ public class RunBerlinZoomer {
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
+//        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
+        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
 
-        config.controler().setLastIteration(30);
+        config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\output");
+        config.controler().setOutputDirectory(rootPath + version + "/output/D/");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
+        config.controler().setWritePlansInterval(5);
 
         // QSim
         config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
@@ -103,24 +96,11 @@ public class RunBerlinZoomer {
 
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
-        config.strategy().setFractionOfIterationsToDisableInnovation(1.); // temp
-        config.strategy().clearStrategySettings();
-        StrategyConfigGroup.StrategySettings ReRoute = new StrategyConfigGroup.StrategySettings();
-        ReRoute.setWeight(1.);
-        ReRoute.setStrategyName("ReRoute");
-        ReRoute.setSubpopulation("person");
-        config.strategy().addStrategySettings(ReRoute);
-
-        StrategyConfigGroup.StrategySettings ReRouteFreight = new StrategyConfigGroup.StrategySettings();
-        ReRouteFreight.setWeight(1.);
-        ReRouteFreight.setStrategyName("ReRoute");
-        ReRouteFreight.setSubpopulation("freight");
-        config.strategy().addStrategySettings(ReRouteFreight);
 
 
         // Zoomer Setup
-        PlanCalcScoreConfigGroup.ModeParams zoomParams = new PlanCalcScoreConfigGroup.ModeParams("zoomer");
-        zoomParams.setMarginalUtilityOfTraveling(0.);
+        ModeParams zoomParams = new ModeParams("zoomer");
+        zoomParams.setMarginalUtilityOfTraveling(100);
         config.planCalcScore().addModeParams(zoomParams);
 
         PlansCalcRouteConfigGroup.ModeRoutingParams zoomRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
@@ -138,7 +118,7 @@ public class RunBerlinZoomer {
 
         // -- C O N T R O L E R --
         Controler controler = new Controler( scenario );
-        controler.addOverridingModule(new SwissRailRaptorModule()); // jr
+        controler.addOverridingModule(new SwissRailRaptorModule());
 
         // use the (congested) car travel time for the teleported ride mode
         controler.addOverridingModule( new AbstractModule() {
@@ -149,8 +129,6 @@ public class RunBerlinZoomer {
             }
         } );
 
-
-//        new ConfigWriter(config).write("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-03\\config_trial.xml");
         controler.run(); //
 
 
@@ -168,20 +146,44 @@ public class RunBerlinZoomer {
         paramSetWalk.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalk );
 
+        // Access Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkA.setMode(TransportMode.access_walk);
+        paramSetWalkA.setRadius(1);
+        paramSetWalkA.setPersonFilterAttribute(null);
+        paramSetWalkA.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
+
+        // Egress Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkE.setMode(TransportMode.egress_walk);
+        paramSetWalkE.setRadius(1);
+        paramSetWalkE.setPersonFilterAttribute(null);
+        paramSetWalkE.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
+
+        // Transit Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkNN.setMode(TransportMode.transit_walk);
+        paramSetWalkNN.setRadius(1);
+        paramSetWalkNN.setPersonFilterAttribute(null);
+        paramSetWalkNN.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+
         // Zoomer
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetZoomer = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetZoomer.setMode("zoomer");
-        paramSetZoomer.setRadius(10000000);
+        paramSetZoomer.setRadius(10000);
         paramSetZoomer.setPersonFilterAttribute(null);
-//        paramSetZoomer.setStopFilterAttribute("bikeAccessible");
-//        paramSetZoomer.setStopFilterValue("true");
+//        paramSetBike.setStopFilterAttribute("bikeAccessible");
+//        paramSetBike.setStopFilterValue("true");
         configRaptor.addIntermodalAccessEgress(paramSetZoomer );
 
         return configRaptor;
     }
 
 
-    private static Config SetupActivityParams(Config config) {
+    static Config SetupActivityParams(Config config) {
         // activities:
         for ( long ii = 600 ; ii <= 97200; ii+=600 ) {
             final ActivityParams params = new ActivityParams( "home_" + ii + ".0" ) ;
@@ -221,22 +223,5 @@ public class RunBerlinZoomer {
         }
 
         return config ;
-    }
-
-    public static ArrayList<String> readIdFile(String fileName){
-        Scanner s ;
-        ArrayList<String> list = new ArrayList<>();
-        try {
-            s = new Scanner(new File(fileName));
-            while (s.hasNext()){
-                list.add(s.next());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
-        return list;
     }
 }

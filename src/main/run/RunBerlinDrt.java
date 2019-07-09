@@ -68,9 +68,10 @@ public class RunBerlinDrt {
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+//        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
-        config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
+        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
@@ -79,8 +80,8 @@ public class RunBerlinDrt {
 //      config.plans().setRemovingUnneccessaryPlanAttributes(true);
 
         config.controler().setLastIteration(15);
-        config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-05\\output");
+//        config.global().setNumberOfThreads( 1 );
+        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-08\\output\\drt-A");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -109,19 +110,6 @@ public class RunBerlinDrt {
 
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
-        config.strategy().setFractionOfIterationsToDisableInnovation(1.); // temp
-        config.strategy().clearStrategySettings();
-        StrategyConfigGroup.StrategySettings ReRoute = new StrategyConfigGroup.StrategySettings();
-        ReRoute.setWeight(1.);
-        ReRoute.setStrategyName("ReRoute");
-        ReRoute.setSubpopulation("person");
-        config.strategy().addStrategySettings(ReRoute);
-
-        StrategyConfigGroup.StrategySettings ReRouteFreight = new StrategyConfigGroup.StrategySettings();
-        ReRouteFreight.setWeight(1.);
-        ReRouteFreight.setStrategyName("ReRoute");
-        ReRouteFreight.setSubpopulation("freight");
-        config.strategy().addStrategySettings(ReRouteFreight);
 
         // drt
         PlanCalcScoreConfigGroup.ModeParams modeParams = new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
