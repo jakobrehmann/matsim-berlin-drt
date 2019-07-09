@@ -58,7 +58,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 public class RunBerlinDrt2 {
 
     enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
-    private static DrtMode drtMode = DrtMode.teleportBeeline  ;
+    private static DrtMode drtMode = DrtMode.full  ;
     private static boolean drt2 = false ;
 
     public static void main(String[] args) {
@@ -98,16 +98,16 @@ public class RunBerlinDrt2 {
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/B/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/D - TestWithFull/");
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
+//        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
         config.transit().setUseTransit(true) ;
 
         // Network Change Events
-        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
+//        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
 
 
         // === ROUTER: ===
@@ -212,7 +212,7 @@ public class RunBerlinDrt2 {
                 drtConfig.setMaxWaitTime( Double.MAX_VALUE );
                 drtConfig.setRequestRejection( false );
                 drtConfig.setMode( TransportMode.drt );
-//                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
+                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
                 mm.addParameterSet( drtConfig );
             }
             if ( drt2 ) {
@@ -224,7 +224,7 @@ public class RunBerlinDrt2 {
                 drtConfig.setMaxWaitTime( Double.MAX_VALUE );
                 drtConfig.setRequestRejection( false );
                 drtConfig.setMode( "drt2" );
-//                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
+                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
                 mm.addParameterSet( drtConfig );
             }
 
@@ -237,7 +237,7 @@ public class RunBerlinDrt2 {
             Id<Link> startLink = Id.createLinkId("92611") ; // near S-Frohnau
             createDrtVehiclesFile(drtVehiclesFile, "DRT-", 1000, startLink );
             if ( drt2 ){
-                createDrtVehiclesFile( drt2VehiclesFile, "DRT2-", 10, Id.createLinkId( "1000-999" ) );
+                createDrtVehiclesFile( drt2VehiclesFile, "DRT2-", 10, startLink );
             }
 
         }
@@ -265,9 +265,6 @@ public class RunBerlinDrt2 {
             scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory( DrtRoute.class, new DrtRouteFactory() );
         }
 
-
-        // Currently, drt can use car network, so this is not neccessary
-//         add drt modes to the car links' allowed modes in their respective service area
         addModeToLinks(scenario.getNetwork(), FrohnauLinkPath,  TransportMode.drt );
         if ( drt2 ){
             addModeToLinks( scenario.getNetwork(), FrohnauLinkPath,  "drt2" );
@@ -329,7 +326,7 @@ public class RunBerlinDrt2 {
 
 
 //        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
-//        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
+        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
         controler.run();
     }
 
