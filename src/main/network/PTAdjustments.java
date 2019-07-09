@@ -91,7 +91,6 @@ public static void main (String[] args) {
 
 					route.getStops().remove(stop);
 
-
 			}
 		}
 
