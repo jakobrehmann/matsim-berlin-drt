@@ -105,6 +105,7 @@ public class AdjustPT {
 				routeLinkIds.remove(i);
 				i = i-1;				
 				}
+			
 
 			}
 		

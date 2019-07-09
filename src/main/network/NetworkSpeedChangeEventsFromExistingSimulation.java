@@ -42,6 +42,7 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 		TravelTimeCalculator tcc = readEventsIntoTravelTimeCalculator( network );
 		List<NetworkChangeEvent> networkChangeEvents = createNetworkChangeEvents( network, tcc );
 		new NetworkChangeEventsWriter().write(CHANGE_EVENTS_FILE, networkChangeEvents);
+		
 	}
 
 	public static List<NetworkChangeEvent> createNetworkChangeEvents( Network network, TravelTimeCalculator tcc ) {
