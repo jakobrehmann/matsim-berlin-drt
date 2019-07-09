@@ -27,6 +27,7 @@ import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.ConfigWriter;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
@@ -72,12 +73,12 @@ public class drtCodeEx2 {
     private static final Id<VehicleType> busTypeID = Id.create( "bus", VehicleType.class );
 
     enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
-    private static DrtMode drtMode = DrtMode.full ;
+    private static DrtMode drtMode = DrtMode.teleportBasedOnNetworkRoute  ;
     private static boolean drt2 = true ;
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-08";
+        String version = "2019-07-09";
         String rootPath = null;
 
         switch (username) {
@@ -98,13 +99,13 @@ public class drtCodeEx2 {
         Config config = ConfigUtils.loadConfig( configFileName);
         config.global().setNumberOfThreads( 1 );
 
-        config.controler().setOutputDirectory( rootPath + "PtExample/A/" ) ;
         config.controler().setLastIteration( 0 );
 
         config.plansCalcRoute().getModeRoutingParams().get( TransportMode.walk ).setTeleportedModeSpeed( 3. );
         config.plansCalcRoute().getModeRoutingParams().get( TransportMode.bike ).setTeleportedModeSpeed( 10. );
 
         config.qsim().setEndTime( 24.*3600. );
+        config.qsim().setNumberOfThreads(1);
 
         config.transit().setUseTransit(true) ;
 
@@ -145,7 +146,7 @@ public class drtCodeEx2 {
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/D/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/A/");
 //        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -258,8 +259,8 @@ public class drtCodeEx2 {
         if ( drtMode== DrtMode.full ){
             // (configure full drt if applicable)
 
-            String drtVehiclesFile = "drt_vehicles.xml";
-            String drt2VehiclesFile = "drt2_vehicles.xml";
+            String drtVehiclesFile = rootPath + version + "/drt_vehicles.xml" ;
+            String drt2VehiclesFile = rootPath + version + "/drt2_vehicles.xml";
 
             DvrpConfigGroup dvrpConfig = ConfigUtils.addOrGetModule( config, DvrpConfigGroup.class );
             dvrpConfig.setNetworkModes( ImmutableSet.copyOf( Arrays.asList( TransportMode.drt, "drt2" ) ) ) ;
@@ -274,7 +275,7 @@ public class drtCodeEx2 {
                 drtConfig.setMaxWaitTime( Double.MAX_VALUE );
                 drtConfig.setRequestRejection( false );
                 drtConfig.setMode( TransportMode.drt );
-                drtConfig.setUseModeFilteredSubnetwork( true );
+//                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
                 mm.addParameterSet( drtConfig );
             }
             if ( drt2 ) {
@@ -286,7 +287,7 @@ public class drtCodeEx2 {
                 drtConfig.setMaxWaitTime( Double.MAX_VALUE );
                 drtConfig.setRequestRejection( false );
                 drtConfig.setMode( "drt2" );
-                drtConfig.setUseModeFilteredSubnetwork( true );
+//                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
                 mm.addParameterSet( drtConfig );
             }
 
@@ -317,11 +318,13 @@ public class drtCodeEx2 {
             scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory( DrtRoute.class, new DrtRouteFactory() );
         }
 
+
+        // Currently, drt can use car network, so this is not neccessary
         // add drt modes to the car links' allowed modes in their respective service area
-        addModeToAllLinksBtwnGivenNodes(scenario.getNetwork(), 0, 400, TransportMode.drt );
-        if ( drt2 ){
-            addModeToAllLinksBtwnGivenNodes( scenario.getNetwork(), 800, 1000, "drt2" );
-        }
+//        addModeToAllLinksBtwnGivenNodes(scenario.getNetwork(), 0, 400, TransportMode.drt );
+//        if ( drt2 ){
+//            addModeToAllLinksBtwnGivenNodes( scenario.getNetwork(), 800, 1000, "drt2" );
+//        }
         // TODO: reference somehow network creation, to ensure that these link ids exist
 
 
@@ -336,12 +339,16 @@ public class drtCodeEx2 {
             vehType.setMaximumVelocity( 25./3.6 );
             scenario.getVehicles().addVehicleType( vehType );
         }
-        {
-            // (does not work without; I don't really know why. kai)
-            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.car, VehicleType.class ) );
-            vehType.setMaximumVelocity( 25./3.6 );
-            scenario.getVehicles().addVehicleType( vehType );
-        }
+//        {
+//            // (does not work without; I don't really know why. kai)
+//            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.car, VehicleType.class ) );
+//            vehType.setMaximumVelocity( 25./3.6 );
+//            scenario.getVehicles().addVehicleType( vehType );
+//        }
+
+        VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.ride, VehicleType.class ) );
+        vehType.setMaximumVelocity( 25./3.6 );
+        scenario.getVehicles().addVehicleType( vehType );
 
 //		scenario.getPopulation().getPersons().values().removeIf( person -> !person.getId().toString().equals( "3" ) );
 
@@ -373,6 +380,8 @@ public class drtCodeEx2 {
             }
         } );
 
+
+        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
         controler.run();
     }
 
@@ -388,6 +397,7 @@ public class drtCodeEx2 {
         config.plansCalcRoute().getModeRoutingParams().get( TransportMode.bike ).setTeleportedModeSpeed( 10. );
 
         config.qsim().setEndTime( 24.*3600. );
+        config.qsim().setNumberOfThreads(1);
 
         config.transit().setUseTransit(true) ;
 

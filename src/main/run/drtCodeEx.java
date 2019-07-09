@@ -28,6 +28,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.ConfigWriter;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
@@ -282,6 +283,8 @@ public class drtCodeEx {
         // This will start otfvis.  Comment out if not needed.
 //        controler.addOverridingModule( new OTFVisLiveModule() );
 
+
+        new ConfigWriter(config).write("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/PtAlongALine/ex1/config_test.xml");
         controler.run();
     }
 

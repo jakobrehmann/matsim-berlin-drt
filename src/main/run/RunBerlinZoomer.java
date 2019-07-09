@@ -26,7 +26,7 @@ public class RunBerlinZoomer {
     public static void main(String[] args) {
 
         String username = "jakob";
-        String version = "2019-07-08";
+        String version = "2019-07-09";
         String rootPath = null;
 
         switch (username) {
@@ -67,7 +67,7 @@ public class RunBerlinZoomer {
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/D/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/C-NetworkChange/");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -112,6 +112,9 @@ public class RunBerlinZoomer {
         // Raptor
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
+
+        // Network Change Events
+//        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
