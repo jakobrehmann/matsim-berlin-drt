@@ -61,9 +61,10 @@ public class RunBerlinDrt {
                 System.out.println("Incorrect Base Path");
         }
 
-        String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
+
 
         // -- C O N F I G --
+         String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
         Config config = ConfigUtils.loadConfig( configFileName); //, customModules ) ; // I need this to set the context
 
         // Input Files -- local
