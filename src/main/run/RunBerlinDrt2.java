@@ -52,7 +52,7 @@ import java.util.*;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 /** Attempt to adapt PtALongALine2 to Berlin Scenario.
- * TODO: modify allowed modes on network in order to allocate a service area to mode "drt"
+ * TODO: access_walk needed to be added. This shouldn't be neccessary...
  */
 
 public class RunBerlinDrt2 {
@@ -98,7 +98,7 @@ public class RunBerlinDrt2 {
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/D - TestWithFull/");
+        config.controler().setOutputDirectory(rootPath + version + "/output/E - TestWithFullBigger/");
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 //        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -147,6 +147,13 @@ public class RunBerlinDrt2 {
         config.plansCalcRoute().addModeRoutingParams( walkParams );
 
 
+        // THIS SHOULDNT BE NECCESSARY - DEPRECATED
+        PlansCalcRouteConfigGroup.ModeRoutingParams accessParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+        accessParams.setMode("access_walk");
+        accessParams.setTeleportedModeSpeed(5. / 3.6);
+        config.plansCalcRoute().addModeRoutingParams(accessParams);
+
+
 
         // === RAPTOR: ===
 
@@ -160,7 +167,7 @@ public class RunBerlinDrt2 {
             // (scoring parameters for drt modes)
             PlanCalcScoreConfigGroup.ModeParams drtScoreParams=new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
 //            drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
-            drtScoreParams.setMarginalUtilityOfTraveling(1000.); //jr
+            drtScoreParams.setMarginalUtilityOfTraveling(10.); //jr
             config.planCalcScore().addModeParams(drtScoreParams);
 
             if ( drt2 ) {
@@ -202,6 +209,7 @@ public class RunBerlinDrt2 {
             DvrpConfigGroup dvrpConfig = ConfigUtils.addOrGetModule( config, DvrpConfigGroup.class );
             dvrpConfig.setNetworkModes( ImmutableSet.copyOf( Arrays.asList( TransportMode.drt, "drt2" ) ) ) ;
 
+
             MultiModeDrtConfigGroup mm = ConfigUtils.addOrGetModule( config, MultiModeDrtConfigGroup.class );
             {
                 DrtConfigGroup drtConfig = new DrtConfigGroup();
@@ -232,9 +240,7 @@ public class RunBerlinDrt2 {
                 DrtConfigs.adjustDrtConfig( drtConfigGroup, config.planCalcScore() );
             }
 
-            // TODO: avoid really writing out these files. However so far it is unclear how
-            // to configure DRT and load the vehicles otherwise
-            Id<Link> startLink = Id.createLinkId("92611") ; // near S-Frohnau
+            Id<Link> startLink = Id.createLinkId("105323"); // near S-Frohnau
             createDrtVehiclesFile(drtVehiclesFile, "DRT-", 1000, startLink );
             if ( drt2 ){
                 createDrtVehiclesFile( drt2VehiclesFile, "DRT2-", 10, startLink );
@@ -311,6 +317,7 @@ public class RunBerlinDrt2 {
                 controler.configureQSimComponents( DvrpQSimComponents.activateModes( TransportMode.drt ) );
             }
         }
+
 
         // This will start otfvis.  Comment out if not needed.
 //        controler.addOverridingModule( new OTFVisLiveModule() );
