@@ -6,7 +6,7 @@ import org.matsim.core.population.io.StreamingPopulationReader;
 import org.matsim.core.population.io.StreamingPopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 
-public class DownsamplePopulation {
+public class DownsamplePopulation1pct {
 
     public static void main(String[] args) {
 
