@@ -81,7 +81,6 @@ public class RunBerlinDrt {
 //      config.plans().setRemovingUnneccessaryPlanAttributes(true);
 
         config.controler().setLastIteration(15);
-//        config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-08\\output\\drt-A");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;

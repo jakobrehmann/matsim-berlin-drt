@@ -53,6 +53,10 @@ import java.util.*;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 /** Attempt to adapt PtALongALine2 to Berlin Scenario.
  * TODO: access_walk needed to be added. This shouldn't be neccessary...
+ *
+ * Changed :
+ * 1) Made drt less attractive
+ * 2) turned on FastAStarLandmarks
  */
 
 public class RunBerlinDrt2 {
@@ -63,7 +67,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-09";
+        String version = "2019-07-10/B - FullFaster";
         String rootPath = null;
 
         switch (username) {
@@ -92,13 +96,15 @@ public class RunBerlinDrt2 {
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
         String FrohnauLinkPath = rootPath + "Input_global/linksWithinFrohnau.txt";
-
+        String outputDirectory = rootPath + version + "/output/";
 
         // === GBL: ===
 
+        new File(outputDirectory).mkdir();
+
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/E - TestWithFullBigger/");
+        config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 //        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
@@ -153,8 +159,6 @@ public class RunBerlinDrt2 {
         accessParams.setTeleportedModeSpeed(5. / 3.6);
         config.plansCalcRoute().addModeRoutingParams(accessParams);
 
-
-
         // === RAPTOR: ===
 
         SwissRailRaptorConfigGroup configRaptor = createRaptorConfigGroup() ;
@@ -162,12 +166,11 @@ public class RunBerlinDrt2 {
 
         // === SCORING: ===
 
-        double margUtlTravPt = config.planCalcScore().getModes().get( TransportMode.pt ).getMarginalUtilityOfTraveling();
+        double margUtlTravPt = config.planCalcScore().getModes().get( TransportMode.pt ).getMarginalUtilityOfTraveling() ;
         if ( drtMode!= DrtMode.none ) {
             // (scoring parameters for drt modes)
             PlanCalcScoreConfigGroup.ModeParams drtScoreParams=new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
-//            drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
-            drtScoreParams.setMarginalUtilityOfTraveling(10.); //jr
+            drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
             config.planCalcScore().addModeParams(drtScoreParams);
 
             if ( drt2 ) {
@@ -282,11 +285,11 @@ public class RunBerlinDrt2 {
         VehiclesFactory vf = scenario.getVehicles().getFactory();
         if ( drt2 ) {
             VehicleType vehType = vf.createVehicleType( Id.create( "drt2", VehicleType.class ) );
-            vehType.setMaximumVelocity( 25/3.6 );
+            vehType.setMaximumVelocity( 1000/3.6 ); //jr
             scenario.getVehicles().addVehicleType( vehType );
         }{
             VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.drt, VehicleType.class ) );
-            vehType.setMaximumVelocity( 25/3.6 );
+            vehType.setMaximumVelocity( 1000/3.6 ); //jr
             scenario.getVehicles().addVehicleType( vehType );
         }
 //        {
@@ -333,7 +336,7 @@ public class RunBerlinDrt2 {
 
 
 //        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
-        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
+//        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
         controler.run();
     }
 
