@@ -3,12 +3,10 @@ package main.run;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
-import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.*;
-import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
@@ -32,16 +30,7 @@ import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.gbl.MatsimRandom;
-import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.geometry.CoordUtils;
-import org.matsim.facilities.ActivityFacilitiesFactory;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityOption;
-import org.matsim.pt.transitSchedule.api.*;
-import org.matsim.pt.utils.TransitScheduleValidator;
-import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 import org.matsim.vis.otfvis.OTFVisConfigGroup;
@@ -51,12 +40,12 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
-/** Attempt to adapt PtALongALine2 to Berlin Scenario.
- * TODO: access_walk needed to be added. This shouldn't be neccessary...
- *
- * Changed :
- * 1) Made drt less attractive
- * 2) turned on FastAStarLandmarks
+
+/** A drt mode is added to the Berlin Scenario. In its current implementation, the drt fleet has a service area limited
+ * to the neighborhood of Frohnau. This scenario can be extended to have multiple fleets, with seperate service areas.
+ * TODO: Get access_walk and egress_walk out of the code. Deprecated
+ * TODO: verify that Network Change Events are working - Not yet
+ * TODO: "could not identify main mode"
  */
 
 public class RunBerlinDrt2 {
@@ -67,7 +56,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-10/B - FullFaster";
+        String version = "2019-07-10/C-OtherModesUnattractive";
         String rootPath = null;
 
         switch (username) {
@@ -83,13 +72,14 @@ public class RunBerlinDrt2 {
 
 
         // -- C O N F I G --
+
         String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         config.network().setInputFile("berlin-v5-network.xml.gz");
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
-        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
-//        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+//        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
+        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -100,198 +90,218 @@ public class RunBerlinDrt2 {
 
         // === GBL: ===
 
-        new File(outputDirectory).mkdir();
+        new File(outputDirectory).mkdirs();
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-//        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
+        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
         config.transit().setUseTransit(true) ;
 
         // Network Change Events
-//        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
+        config.network().setTimeVariantNetwork(true);
+        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
 
 
         // === ROUTER: ===
+        {
+            config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+            config.plansCalcRoute().setRoutingRandomness(3.); //jr
+            config.plansCalcRoute().removeModeRoutingParams(TransportMode.ride);
+            config.plansCalcRoute().removeModeRoutingParams(TransportMode.pt);
+            config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
+            config.plansCalcRoute().removeModeRoutingParams("undefined");
 
-        config.plansCalcRoute().setInsertingAccessEgressWalk( true );
-        config.plansCalcRoute().setRoutingRandomness( 3. ); //jr
-        config.plansCalcRoute().removeModeRoutingParams(TransportMode.ride);
-        config.plansCalcRoute().removeModeRoutingParams(TransportMode.pt);
-        config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
-        config.plansCalcRoute().removeModeRoutingParams("undefined");
+            if (drtMode == DrtMode.teleportBeeline) {// (configure teleportation router)
+                PlansCalcRouteConfigGroup.ModeRoutingParams drtParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+                drtParams.setMode(TransportMode.drt);
+                drtParams.setTeleportedModeSpeed(1000. / 3.6); // CHANGED jr
+                config.plansCalcRoute().addModeRoutingParams(drtParams);
+                if (drt2) {
+                    PlansCalcRouteConfigGroup.ModeRoutingParams drt2Params = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+                    drt2Params.setMode("drt2");
+                    drt2Params.setTeleportedModeSpeed(1000. / 3.6);  // CHANGED jr
+                    config.plansCalcRoute().addModeRoutingParams(drt2Params);
+                }
+                // teleportation router for walk or bike is automatically defined.
+            } else if (drtMode == DrtMode.teleportBasedOnNetworkRoute) {// (route as network route)
+                Set<String> networkModes = new HashSet<>();
+                networkModes.add(TransportMode.drt);
+                if (drt2) {
+                    networkModes.add("drt2");
+                }
+                config.plansCalcRoute().setNetworkModes(networkModes);
+            }
 
-        if(  drtMode == DrtMode.teleportBeeline ){// (configure teleportation router)
-            PlansCalcRouteConfigGroup.ModeRoutingParams drtParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-            drtParams.setMode( TransportMode.drt );
-            drtParams.setTeleportedModeSpeed( 1000. / 3.6 ); // CHANGED jr
-            config.plansCalcRoute().addModeRoutingParams( drtParams );
-            if( drt2 ){
-                PlansCalcRouteConfigGroup.ModeRoutingParams drt2Params = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-                drt2Params.setMode( "drt2" );
-                drt2Params.setTeleportedModeSpeed( 1000. / 3.6 );  // CHANGED jr
-                config.plansCalcRoute().addModeRoutingParams( drt2Params );
-            }
-            // teleportation router for walk or bike is automatically defined.
-        } else if( drtMode == DrtMode.teleportBasedOnNetworkRoute ){// (route as network route)
-            Set<String> networkModes = new HashSet<>( );
-            networkModes.add( TransportMode.drt );
-            if( drt2 ){
-                networkModes.add( "drt2" );
-            }
-            config.plansCalcRoute().setNetworkModes( networkModes );
+            // set up walk2 so we don't need walk in raptor:
+            PlansCalcRouteConfigGroup.ModeRoutingParams walkParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+            walkParams.setMode("walk2");
+            walkParams.setTeleportedModeSpeed(5. / 3.6);
+            config.plansCalcRoute().addModeRoutingParams(walkParams);
+
+
+            // THIS SHOULDNT BE NECCESSARY - DEPRECATED
+            PlansCalcRouteConfigGroup.ModeRoutingParams accessParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+            accessParams.setMode("access_walk");
+            accessParams.setTeleportedModeSpeed(5. / 3.6);
+            config.plansCalcRoute().addModeRoutingParams(accessParams);
         }
-
-        // set up walk2 so we don't need walk in raptor:
-        PlansCalcRouteConfigGroup.ModeRoutingParams walkParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-        walkParams.setMode( "walk2" );
-        walkParams.setTeleportedModeSpeed( 5. / 3.6 );
-        config.plansCalcRoute().addModeRoutingParams( walkParams );
-
-
-        // THIS SHOULDNT BE NECCESSARY - DEPRECATED
-        PlansCalcRouteConfigGroup.ModeRoutingParams accessParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-        accessParams.setMode("access_walk");
-        accessParams.setTeleportedModeSpeed(5. / 3.6);
-        config.plansCalcRoute().addModeRoutingParams(accessParams);
-
         // === RAPTOR: ===
-
-        SwissRailRaptorConfigGroup configRaptor = createRaptorConfigGroup() ;
-        config.addModule(configRaptor) ;
-
-        // === SCORING: ===
-
-        double margUtlTravPt = config.planCalcScore().getModes().get( TransportMode.pt ).getMarginalUtilityOfTraveling() ;
-        if ( drtMode!= DrtMode.none ) {
-            // (scoring parameters for drt modes)
-            PlanCalcScoreConfigGroup.ModeParams drtScoreParams=new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
-            drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
-            config.planCalcScore().addModeParams(drtScoreParams);
-
-            if ( drt2 ) {
-                PlanCalcScoreConfigGroup.ModeParams drt2ScoreParams= new PlanCalcScoreConfigGroup.ModeParams("drt2");
-                drt2ScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
-                config.planCalcScore().addModeParams(drt2ScoreParams ) ;
-            }
+        {
+            SwissRailRaptorConfigGroup configRaptor = createRaptorConfigGroup();
+            config.addModule(configRaptor);
         }
-        PlanCalcScoreConfigGroup.ModeParams walkScoreParams = new PlanCalcScoreConfigGroup.ModeParams("walk2");
-        walkScoreParams.setMarginalUtilityOfTraveling( margUtlTravPt );
-        config.planCalcScore().addModeParams( walkScoreParams) ;
+        // === SCORING: ===
+        {
+            double margUtlTravPt = config.planCalcScore().getModes().get(TransportMode.pt).getMarginalUtilityOfTraveling();
+            if (drtMode != DrtMode.none) {
+                // (scoring parameters for drt modes)
+                PlanCalcScoreConfigGroup.ModeParams drtScoreParams = new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
+                drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+                config.planCalcScore().addModeParams(drtScoreParams);
 
+                if (drt2) {
+                    PlanCalcScoreConfigGroup.ModeParams drt2ScoreParams = new PlanCalcScoreConfigGroup.ModeParams("drt2");
+                    drt2ScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+                    config.planCalcScore().addModeParams(drt2ScoreParams);
+                }
+            }
+            PlanCalcScoreConfigGroup.ModeParams walkScoreParams = new PlanCalcScoreConfigGroup.ModeParams("walk2");
+            walkScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+            config.planCalcScore().addModeParams(walkScoreParams);
+
+// make everything really unattractive
+            config.planCalcScore().getModes().get(TransportMode.car).setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get(TransportMode.ride).setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get("bicycle").setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get(TransportMode.walk).setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get(TransportMode.transit_walk).setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get("access_walk").setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get("egress_walk").setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get("walk2").setMarginalUtilityOfTraveling(-10.);
+            config.planCalcScore().getModes().get(TransportMode.drt).setMarginalUtilityOfTraveling(0.); //except drt, of course
+
+
+
+            // drt interaction
+            PlanCalcScoreConfigGroup.ActivityParams drtParams = new PlanCalcScoreConfigGroup.ActivityParams("drt interaction");
+            drtParams.setTypicalDuration(1.);
+            config.planCalcScore().addActivityParams(drtParams);
 //        configureScoring(config);
 
-        config = RunBerlinZoomer.SetupActivityParams(config); //jr
-
+            config = RunBerlinZoomer.SetupActivityParams(config); //jr
+        }
         // === QSIM: ===
+        {
+            config.qsim().setSnapshotStyle(QSimConfigGroup.SnapshotStyle.kinematicWaves);
+            config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
+            config.qsim().setVehiclesSource(QSimConfigGroup.VehiclesSource.modeVehicleTypesFromVehiclesData);
+            // (as of today, will also influence router. kai, jun'19)
+            config.qsim().setSimStarttimeInterpretation(QSimConfigGroup.StarttimeInterpretation.onlyUseStarttime);
+            config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
+            config.qsim().setEndTime(24. * 3600.);
+            config.qsim().setUsingTravelTimeCheckInTeleportation(true);
+            config.qsim().setNumberOfThreads(1);
 
-        config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
-        config.qsim().setTrafficDynamics( QSimConfigGroup.TrafficDynamics.kinematicWaves );
-        config.qsim().setVehiclesSource( QSimConfigGroup.VehiclesSource.modeVehicleTypesFromVehiclesData );
-        // (as of today, will also influence router. kai, jun'19)
-        config.qsim().setSimStarttimeInterpretation( QSimConfigGroup.StarttimeInterpretation.onlyUseStarttime );
-        config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
-        config.qsim().setEndTime( 24.*3600. );
-        config.qsim().setUsingTravelTimeCheckInTeleportation( true );
-        config.qsim().setNumberOfThreads(1);
 
-
-
+        }
         // === DRT: ===
+        {
+            if (drtMode == DrtMode.full) {
+                // (configure full drt if applicable)
 
-        if ( drtMode== DrtMode.full ){
-            // (configure full drt if applicable)
+                String drtVehiclesFile = rootPath + version + "/drt_vehicles.xml";
+                String drt2VehiclesFile = rootPath + version + "/drt2_vehicles.xml";
 
-            String drtVehiclesFile = rootPath + version + "/drt_vehicles.xml" ;
-            String drt2VehiclesFile = rootPath + version + "/drt2_vehicles.xml";
-
-            DvrpConfigGroup dvrpConfig = ConfigUtils.addOrGetModule( config, DvrpConfigGroup.class );
-            dvrpConfig.setNetworkModes( ImmutableSet.copyOf( Arrays.asList( TransportMode.drt, "drt2" ) ) ) ;
+                DvrpConfigGroup dvrpConfig = ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
+                dvrpConfig.setNetworkModes(ImmutableSet.copyOf(Arrays.asList(TransportMode.drt, "drt2")));
 
 
-            MultiModeDrtConfigGroup mm = ConfigUtils.addOrGetModule( config, MultiModeDrtConfigGroup.class );
-            {
-                DrtConfigGroup drtConfig = new DrtConfigGroup();
-                drtConfig.setMaxTravelTimeAlpha( 1.3 );
-                drtConfig.setVehiclesFile( drtVehiclesFile );
-                drtConfig.setMaxTravelTimeBeta( 5. * 60. );
-                drtConfig.setStopDuration( 60. );
-                drtConfig.setMaxWaitTime( Double.MAX_VALUE );
-                drtConfig.setRequestRejection( false );
-                drtConfig.setMode( TransportMode.drt );
-                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
-                mm.addParameterSet( drtConfig );
-            }
-            if ( drt2 ) {
-                DrtConfigGroup drtConfig = new DrtConfigGroup();
-                drtConfig.setMaxTravelTimeAlpha( 1.3 );
-                drtConfig.setVehiclesFile( drt2VehiclesFile );
-                drtConfig.setMaxTravelTimeBeta( 5. * 60. );
-                drtConfig.setStopDuration( 60. );
-                drtConfig.setMaxWaitTime( Double.MAX_VALUE );
-                drtConfig.setRequestRejection( false );
-                drtConfig.setMode( "drt2" );
-                drtConfig.setUseModeFilteredSubnetwork( true ); //jr
-                mm.addParameterSet( drtConfig );
-            }
+                MultiModeDrtConfigGroup mm = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+                {
+                    DrtConfigGroup drtConfig = new DrtConfigGroup();
+                    drtConfig.setMaxTravelTimeAlpha(1.3);
+                    drtConfig.setVehiclesFile(drtVehiclesFile);
+                    drtConfig.setMaxTravelTimeBeta(5. * 60.);
+                    drtConfig.setStopDuration(60.);
+                    drtConfig.setMaxWaitTime(Double.MAX_VALUE);
+                    drtConfig.setRequestRejection(false);
+                    drtConfig.setMode(TransportMode.drt);
+                    drtConfig.setUseModeFilteredSubnetwork(true); //jr
+                    mm.addParameterSet(drtConfig);
+                }
+                if (drt2) {
+                    DrtConfigGroup drtConfig = new DrtConfigGroup();
+                    drtConfig.setMaxTravelTimeAlpha(1.3);
+                    drtConfig.setVehiclesFile(drt2VehiclesFile);
+                    drtConfig.setMaxTravelTimeBeta(5. * 60.);
+                    drtConfig.setStopDuration(60.);
+                    drtConfig.setMaxWaitTime(Double.MAX_VALUE);
+                    drtConfig.setRequestRejection(false);
+                    drtConfig.setMode("drt2");
+                    drtConfig.setUseModeFilteredSubnetwork(true); //jr
+                    mm.addParameterSet(drtConfig);
+                }
 
-            for( DrtConfigGroup drtConfigGroup : mm.getModalElements() ){
-                DrtConfigs.adjustDrtConfig( drtConfigGroup, config.planCalcScore() );
-            }
+                for (DrtConfigGroup drtConfigGroup : mm.getModalElements()) {
+                    DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore());
+                }
 
-            Id<Link> startLink = Id.createLinkId("105323"); // near S-Frohnau
-            createDrtVehiclesFile(drtVehiclesFile, "DRT-", 1000, startLink );
-            if ( drt2 ){
-                createDrtVehiclesFile( drt2VehiclesFile, "DRT2-", 10, startLink );
+                Id<Link> startLink = Id.createLinkId("105323"); // near S-Frohnau
+                createDrtVehiclesFile(drtVehiclesFile, "DRT-", 1000, startLink);
+                if (drt2) {
+                    createDrtVehiclesFile(drt2VehiclesFile, "DRT2-", 10, startLink);
+                }
+
             }
 
         }
-
-
         // === OTFVIS: ===
-        OTFVisConfigGroup visConfig = ConfigUtils.addOrGetModule( config, OTFVisConfigGroup.class );
-        visConfig.setDrawTransitFacilities( false );
-        visConfig.setColoringScheme( OTFVisConfigGroup.ColoringScheme.bvg ) ;
-        visConfig.setDrawTime(true);
-        visConfig.setDrawNonMovingItems(true);
-        visConfig.setAgentSize(125);
-        visConfig.setLinkWidth(30);
-        visConfig.setShowTeleportedAgents( true );
-        visConfig.setDrawTransitFacilities( true );
+        {
+            OTFVisConfigGroup visConfig = ConfigUtils.addOrGetModule(config, OTFVisConfigGroup.class);
+            visConfig.setDrawTransitFacilities(false);
+            visConfig.setColoringScheme(OTFVisConfigGroup.ColoringScheme.bvg);
+            visConfig.setDrawTime(true);
+            visConfig.setDrawNonMovingItems(true);
+            visConfig.setAgentSize(125);
+            visConfig.setLinkWidth(30);
+            visConfig.setShowTeleportedAgents(true);
+            visConfig.setDrawTransitFacilities(true);
 
-
+        }
         // ### SCENARIO: ###
-
+        Scenario scenario = ScenarioUtils.loadScenario(config); //jr
+        {
 //        Scenario scenario = createScenario(config , 30 );
 
-        Scenario scenario = ScenarioUtils.loadScenario( config ); //jr
 
-        if ( drtMode== DrtMode.full ) {
-            scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory( DrtRoute.class, new DrtRouteFactory() );
-        }
+            if (drtMode == DrtMode.full) {
+                scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+            }
 
-        addModeToLinks(scenario.getNetwork(), FrohnauLinkPath,  TransportMode.drt );
-        if ( drt2 ){
-            addModeToLinks( scenario.getNetwork(), FrohnauLinkPath,  "drt2" );
-        }
-        // TODO: reference somehow network creation, to ensure that these link ids exist
+            addModeToLinks(scenario.getNetwork(), FrohnauLinkPath, TransportMode.drt);
+            if (drt2) {
+                addModeToLinks(scenario.getNetwork(), FrohnauLinkPath, "drt2");
+            }
+            // TODO: reference somehow network creation, to ensure that these link ids exist
 
 
-        // The following is also for the router! kai, jun'19
-        VehiclesFactory vf = scenario.getVehicles().getFactory();
-        if ( drt2 ) {
-            VehicleType vehType = vf.createVehicleType( Id.create( "drt2", VehicleType.class ) );
-            vehType.setMaximumVelocity( 1000/3.6 ); //jr
-            scenario.getVehicles().addVehicleType( vehType );
-        }{
-            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.drt, VehicleType.class ) );
-            vehType.setMaximumVelocity( 1000/3.6 ); //jr
-            scenario.getVehicles().addVehicleType( vehType );
-        }
+            // The following is also for the router! kai, jun'19
+            VehiclesFactory vf = scenario.getVehicles().getFactory();
+            if (drt2) {
+                VehicleType vehType = vf.createVehicleType(Id.create("drt2", VehicleType.class));
+                vehType.setMaximumVelocity(1000 / 3.6); //jr
+                scenario.getVehicles().addVehicleType(vehType);
+            }
+            {
+                VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.drt, VehicleType.class));
+                vehType.setMaximumVelocity(1000 / 3.6); //jr
+                scenario.getVehicles().addVehicleType(vehType);
+            }
 //        {
 //            // (does not work without; I don't really know why. kai)
 //            VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.car, VehicleType.class ) );
@@ -299,65 +309,66 @@ public class RunBerlinDrt2 {
 //            scenario.getVehicles().addVehicleType( vehType );
 //        }
 
-        VehicleType vehType = vf.createVehicleType( Id.create( TransportMode.ride, VehicleType.class ) );
-        vehType.setMaximumVelocity( 25./3.6 );
-        scenario.getVehicles().addVehicleType( vehType );
+            VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.ride, VehicleType.class));
+            vehType.setMaximumVelocity(25. / 3.6);
+            scenario.getVehicles().addVehicleType(vehType);
 
 //		scenario.getPopulation().getPersons().values().removeIf( person -> !person.getId().toString().equals( "3" ) );
-
-        // ### CONTROLER: ###
-
-        Controler controler = new Controler(scenario);
-
-        controler.addOverridingModule(new SwissRailRaptorModule() ) ;
-
-        if ( drtMode== DrtMode.full ){
-            controler.addOverridingModule( new DvrpModule() );
-            controler.addOverridingModule( new MultiModeDrtModule() );
-            if ( drt2 ){
-                controler.configureQSimComponents( DvrpQSimComponents.activateModes( TransportMode.drt, "drt2" ) );
-            } else{
-                controler.configureQSimComponents( DvrpQSimComponents.activateModes( TransportMode.drt ) );
-            }
         }
+        // ### CONTROLER: ###
+        {
+            Controler controler = new Controler(scenario);
+
+            controler.addOverridingModule(new SwissRailRaptorModule());
+
+            if (drtMode == DrtMode.full) {
+                controler.addOverridingModule(new DvrpModule());
+                controler.addOverridingModule(new MultiModeDrtModule());
+                if (drt2) {
+                    controler.configureQSimComponents(DvrpQSimComponents.activateModes(TransportMode.drt, "drt2"));
+                } else {
+                    controler.configureQSimComponents(DvrpQSimComponents.activateModes(TransportMode.drt));
+                }
+            }
 
 
-        // This will start otfvis.  Comment out if not needed.
+            // This will start otfvis.  Comment out if not needed.
 //        controler.addOverridingModule( new OTFVisLiveModule() );
 
-        // use the (congested) car travel time for the teleported ride mode
-        controler.addOverridingModule( new AbstractModule() {
-            @Override
-            public void install() {
-                addTravelTimeBinding( TransportMode.ride ).to( networkTravelTime() );
-                addTravelDisutilityFactoryBinding( TransportMode.ride ).to( carTravelDisutilityFactoryKey() );
-            }
-        } );
+            // use the (congested) car travel time for the teleported ride mode
+            controler.addOverridingModule(new AbstractModule() {
+                @Override
+                public void install() {
+                    addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
+                    addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
+                }
+            });
 
 
-//        new ConfigWriter(config).write(rootPath + "PtAlongALine/ex2/config_test2.xml");
+            new ConfigWriter(config).write(rootPath + version + "/configWithDrtTest.xml");
 //        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
-        controler.run();
+            controler.run();
+        }
     }
 
 
-    private static void configureScoring(Config config) {
-        PlanCalcScoreConfigGroup.ModeParams accessWalk = new PlanCalcScoreConfigGroup.ModeParams( TransportMode.non_network_walk );
-        accessWalk.setMarginalUtilityOfTraveling(0);
-        config.planCalcScore().addModeParams(accessWalk);
-
-        PlanCalcScoreConfigGroup.ModeParams transitWalk = new PlanCalcScoreConfigGroup.ModeParams("transit_walk");
-        transitWalk.setMarginalUtilityOfTraveling(0);
-        config.planCalcScore().addModeParams(transitWalk);
-
-        PlanCalcScoreConfigGroup.ModeParams bike = new PlanCalcScoreConfigGroup.ModeParams("bike");
-        bike.setMarginalUtilityOfTraveling(0);
-        config.planCalcScore().addModeParams(bike);
-
-        PlanCalcScoreConfigGroup.ModeParams drt = new PlanCalcScoreConfigGroup.ModeParams("drt");
-        drt.setMarginalUtilityOfTraveling(0);
-        config.planCalcScore().addModeParams(drt);
-    }
+//    private static void configureScoring(Config config) {
+//        PlanCalcScoreConfigGroup.ModeParams accessWalk = new PlanCalcScoreConfigGroup.ModeParams( TransportMode.non_network_walk );
+//        accessWalk.setMarginalUtilityOfTraveling(0);
+//        config.planCalcScore().addModeParams(accessWalk);
+//
+//        PlanCalcScoreConfigGroup.ModeParams transitWalk = new PlanCalcScoreConfigGroup.ModeParams("transit_walk");
+//        transitWalk.setMarginalUtilityOfTraveling(0);
+//        config.planCalcScore().addModeParams(transitWalk);
+//
+//        PlanCalcScoreConfigGroup.ModeParams bike = new PlanCalcScoreConfigGroup.ModeParams("bike");
+//        bike.setMarginalUtilityOfTraveling(0);
+//        config.planCalcScore().addModeParams(bike);
+//
+//        PlanCalcScoreConfigGroup.ModeParams drt = new PlanCalcScoreConfigGroup.ModeParams("drt");
+//        drt.setMarginalUtilityOfTraveling(0);
+//        config.planCalcScore().addModeParams(drt);
+//    }
 
     static SwissRailRaptorConfigGroup createRaptorConfigGroup() {
         SwissRailRaptorConfigGroup configRaptor = new SwissRailRaptorConfigGroup();
