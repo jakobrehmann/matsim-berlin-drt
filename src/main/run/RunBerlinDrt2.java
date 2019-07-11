@@ -44,7 +44,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 /** A drt mode is added to the Berlin Scenario. In its current implementation, the drt fleet has a service area limited
  * to the neighborhood of Frohnau. This scenario can be extended to have multiple fleets, with seperate service areas.
  * TODO: Get access_walk and egress_walk out of the code. Deprecated
- * TODO: verify that Network Change Events are working - Not yet
+ * TODO: NetworkChangeEvents do not appear in events
  * TODO: "could not identify main mode"
  * TODO: "java.lang.ArrayIndexOutOfBoundsException: -2386092 -- nothing to do with AStar
  *
@@ -54,12 +54,12 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 public class RunBerlinDrt2 {
 
     enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
-    private static DrtMode drtMode = DrtMode.full  ;
+    private static DrtMode drtMode = DrtMode.teleportBeeline  ;
     private static boolean drt2 = false ;
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-11/C-OtherModesUnattractive";
+        String version = "2019-07-11/A-TeleportedBeeline";
         String rootPath = null;
 
         switch (username) {
@@ -107,7 +107,7 @@ public class RunBerlinDrt2 {
 
         // Network Change Events
         config.network().setTimeVariantNetwork(true);
-        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
+        config.network().setChangeEventsInputFile("networkChangeEvents.xml");
 
 
         // === ROUTER: ===
