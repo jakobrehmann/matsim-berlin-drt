@@ -41,8 +41,8 @@ public class RemoveAccessEgressWalkFromPlans {
                 default:
                     System.out.println("Incorrect Base Path");
             }
-            String inputPopFilename = rootPath + "/Input_global/berlin-v5.4-1pct.plans.xml.gz";
-            String outputPopFilename = rootPath  + "Input_global/Berlin-plans-Frohnau.xml";
+            String inputPopFilename = rootPath + "Input_global/Berlin-plans-Frohnau.xml";
+            String outputPopFilename = rootPath + "Input_global/Berlin-plans-Frohnau-scrubbed.xml";
 
             // Read Population
             Scenario sc = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -65,7 +65,7 @@ public class RemoveAccessEgressWalkFromPlans {
 
             }
 
-            new PopulationWriter(sc2.getPopulation()).write(outputPopFilename);
+            new PopulationWriter(sc.getPopulation()).write(outputPopFilename);
 
         }
 }

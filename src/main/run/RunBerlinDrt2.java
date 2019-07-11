@@ -46,6 +46,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * TODO: Get access_walk and egress_walk out of the code. Deprecated
  * TODO: verify that Network Change Events are working - Not yet
  * TODO: "could not identify main mode"
+ * TODO: "java.lang.ArrayIndexOutOfBoundsException: -2386092 -- nothing to do with AStar
+ *
+ * Changed: 1) time dep network and 2) using new plans file without access/egress
  */
 
 public class RunBerlinDrt2 {
@@ -56,7 +59,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-10/C-OtherModesUnattractive";
+        String version = "2019-07-11/C-OtherModesUnattractive";
         String rootPath = null;
 
         switch (username) {
@@ -79,7 +82,7 @@ public class RunBerlinDrt2 {
         config.network().setInputFile("berlin-v5-network.xml.gz");
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
 //        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
-        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+        config.plans().setInputFile("berlin-plans-Frohnau-scrubbed.xml"); // 1% population in Frohnau - scrubbed
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -96,7 +99,7 @@ public class RunBerlinDrt2 {
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
+//        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
@@ -144,11 +147,11 @@ public class RunBerlinDrt2 {
             config.plansCalcRoute().addModeRoutingParams(walkParams);
 
 
-            // THIS SHOULDNT BE NECCESSARY - DEPRECATED
-            PlansCalcRouteConfigGroup.ModeRoutingParams accessParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-            accessParams.setMode("access_walk");
-            accessParams.setTeleportedModeSpeed(5. / 3.6);
-            config.plansCalcRoute().addModeRoutingParams(accessParams);
+//            // THIS SHOULDNT BE NECCESSARY - DEPRECATED
+//            PlansCalcRouteConfigGroup.ModeRoutingParams accessParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+//            accessParams.setMode("access_walk");
+//            accessParams.setTeleportedModeSpeed(5. / 3.6);
+//            config.plansCalcRoute().addModeRoutingParams(accessParams);
         }
         // === RAPTOR: ===
         {
@@ -180,8 +183,8 @@ public class RunBerlinDrt2 {
             config.planCalcScore().getModes().get("bicycle").setMarginalUtilityOfTraveling(-10.);
             config.planCalcScore().getModes().get(TransportMode.walk).setMarginalUtilityOfTraveling(-10.);
             config.planCalcScore().getModes().get(TransportMode.transit_walk).setMarginalUtilityOfTraveling(-10.);
-            config.planCalcScore().getModes().get("access_walk").setMarginalUtilityOfTraveling(-10.);
-            config.planCalcScore().getModes().get("egress_walk").setMarginalUtilityOfTraveling(-10.);
+//            config.planCalcScore().getModes().get("access_walk").setMarginalUtilityOfTraveling(-10.);
+//            config.planCalcScore().getModes().get("egress_walk").setMarginalUtilityOfTraveling(-10.);
             config.planCalcScore().getModes().get("walk2").setMarginalUtilityOfTraveling(-10.);
             config.planCalcScore().getModes().get(TransportMode.drt).setMarginalUtilityOfTraveling(0.); //except drt, of course
 
@@ -402,39 +405,39 @@ public class RunBerlinDrt2 {
                 configRaptor.addIntermodalAccessEgress( paramSetDrt2 );
             }
 
-            { // from zoomer
-                // Walk
-                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalk.setMode(TransportMode.walk);
-                paramSetWalk.setRadius(1);
-                paramSetWalk.setPersonFilterAttribute(null);
-                paramSetWalk.setStopFilterAttribute(null);
-                configRaptor.addIntermodalAccessEgress(paramSetWalk );
-
-                // Access Walk
-                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalkA.setMode(TransportMode.access_walk);
-                paramSetWalkA.setRadius(1);
-                paramSetWalkA.setPersonFilterAttribute(null);
-                paramSetWalkA.setStopFilterAttribute(null);
-                configRaptor.addIntermodalAccessEgress(paramSetWalkA );
-
-                // Egress Walk
-                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalkE.setMode(TransportMode.egress_walk);
-                paramSetWalkE.setRadius(1);
-                paramSetWalkE.setPersonFilterAttribute(null);
-                paramSetWalkE.setStopFilterAttribute(null);
-                configRaptor.addIntermodalAccessEgress(paramSetWalkE );
-
-                // Transit Walk
-                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalkNN.setMode(TransportMode.transit_walk);
-                paramSetWalkNN.setRadius(1);
-                paramSetWalkNN.setPersonFilterAttribute(null);
-                paramSetWalkNN.setStopFilterAttribute(null);
-                configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
-            }
+//            { // from zoomer
+//                // Walk
+//                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//                paramSetWalk.setMode(TransportMode.walk);
+//                paramSetWalk.setRadius(1);
+//                paramSetWalk.setPersonFilterAttribute(null);
+//                paramSetWalk.setStopFilterAttribute(null);
+//                configRaptor.addIntermodalAccessEgress(paramSetWalk );
+//
+//                // Access Walk
+//                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//                paramSetWalkA.setMode(TransportMode.access_walk);
+//                paramSetWalkA.setRadius(1);
+//                paramSetWalkA.setPersonFilterAttribute(null);
+//                paramSetWalkA.setStopFilterAttribute(null);
+//                configRaptor.addIntermodalAccessEgress(paramSetWalkA );
+//
+//                // Egress Walk
+//                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//                paramSetWalkE.setMode(TransportMode.egress_walk);
+//                paramSetWalkE.setRadius(1);
+//                paramSetWalkE.setPersonFilterAttribute(null);
+//                paramSetWalkE.setStopFilterAttribute(null);
+//                configRaptor.addIntermodalAccessEgress(paramSetWalkE );
+//
+//                // Transit Walk
+//                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//                paramSetWalkNN.setMode(TransportMode.transit_walk);
+//                paramSetWalkNN.setRadius(1);
+//                paramSetWalkNN.setPersonFilterAttribute(null);
+//                paramSetWalkNN.setStopFilterAttribute(null);
+//                configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+//            }
         }
 
         return configRaptor;
