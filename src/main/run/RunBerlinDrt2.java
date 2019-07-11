@@ -59,7 +59,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-11/A-TeleportedBeeline";
+        String version = "2019-07-11/B-TeleportedBeeline2";
         String rootPath = null;
 
         switch (username) {
@@ -406,13 +406,21 @@ public class RunBerlinDrt2 {
             }
 
 //            { // from zoomer
-//                // Walk
-//                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-//                paramSetWalk.setMode(TransportMode.walk);
-//                paramSetWalk.setRadius(1);
-//                paramSetWalk.setPersonFilterAttribute(null);
-//                paramSetWalk.setStopFilterAttribute(null);
-//                configRaptor.addIntermodalAccessEgress(paramSetWalk );
+                // Walk
+                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+                paramSetWalk.setMode(TransportMode.walk);
+                paramSetWalk.setRadius(1);
+                paramSetWalk.setPersonFilterAttribute(null);
+                paramSetWalk.setStopFilterAttribute(null);
+                configRaptor.addIntermodalAccessEgress(paramSetWalk );
+
+                // Walk
+                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+                paramSetWalkNN.setMode(TransportMode.non_network_walk);
+                paramSetWalkNN.setRadius(1);
+                paramSetWalkNN.setPersonFilterAttribute(null);
+                paramSetWalkNN.setStopFilterAttribute(null);
+                configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
 //
 //                // Access Walk
 //                SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
