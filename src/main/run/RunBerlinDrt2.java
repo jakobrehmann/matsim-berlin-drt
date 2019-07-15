@@ -48,7 +48,8 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * TODO: "could not identify main mode"
  * TODO: "java.lang.ArrayIndexOutOfBoundsException: -2386092 -- nothing to do with AStar
  *
- * Changed: 1) time dep network and 2) using new plans file without access/egress
+ * Changed: 1) Reroute weight changed in config 2) Astar on 3) time variant off 4) marg utility of drt to 1000
+ * 5) max vel to 25 
  */
 
 public class RunBerlinDrt2 {
