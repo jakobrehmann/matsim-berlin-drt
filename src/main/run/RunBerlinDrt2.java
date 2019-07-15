@@ -59,7 +59,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-15/A-BeelineAttempt";
+        String version = "2019-07-15/C-BeelineAttemptReRoute";
         String rootPath = null;
 
         switch (username) {
@@ -76,13 +76,14 @@ public class RunBerlinDrt2 {
 
         // -- C O N F I G --
 
-        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
+//        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
+        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         config.network().setInputFile("berlin-v5-network.xml.gz");
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
-//        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
-        config.plans().setInputFile("berlin-plans-Frohnau-scrubbed.xml"); // 1% population in Frohnau - scrubbed
+        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
+//        config.plans().setInputFile("berlin-plans-Frohnau-scrubbed.xml"); // 1% population in Frohnau - scrubbed
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -95,19 +96,19 @@ public class RunBerlinDrt2 {
 
         new File(outputDirectory).mkdirs();
 
-        config.controler().setLastIteration(50);
+        config.controler().setLastIteration(5);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-//        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
+        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
-        config.controler().setWritePlansInterval(5);
-        config.controler().setWriteEventsInterval(5);
+        config.controler().setWritePlansInterval(1);
+        config.controler().setWriteEventsInterval(1);
         config.transit().setUseTransit(true) ;
 
         // Network Change Events
-        config.network().setTimeVariantNetwork(true);
-        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
+//        config.network().setTimeVariantNetwork(true);
+//        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
 
 
         // === ROUTER: ===
@@ -158,13 +159,15 @@ public class RunBerlinDrt2 {
             SwissRailRaptorConfigGroup configRaptor = createRaptorConfigGroup();
             config.addModule(configRaptor);
         }
+
         // === SCORING: ===
         {
             double margUtlTravPt = config.planCalcScore().getModes().get(TransportMode.pt).getMarginalUtilityOfTraveling();
             if (drtMode != DrtMode.none) {
                 // (scoring parameters for drt modes)
                 PlanCalcScoreConfigGroup.ModeParams drtScoreParams = new PlanCalcScoreConfigGroup.ModeParams(TransportMode.drt);
-                drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+//                drtScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+                drtScoreParams.setMarginalUtilityOfTraveling(1000.);
                 config.planCalcScore().addModeParams(drtScoreParams);
 
                 if (drt2) {
@@ -297,12 +300,12 @@ public class RunBerlinDrt2 {
             VehiclesFactory vf = scenario.getVehicles().getFactory();
             if (drt2) {
                 VehicleType vehType = vf.createVehicleType(Id.create("drt2", VehicleType.class));
-                vehType.setMaximumVelocity(1000 / 3.6); //jr
+                vehType.setMaximumVelocity(25. / 3.6); //jr
                 scenario.getVehicles().addVehicleType(vehType);
             }
             {
                 VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.drt, VehicleType.class));
-                vehType.setMaximumVelocity(1000 / 3.6); //jr
+                vehType.setMaximumVelocity(25. / 3.6); //jr
                 scenario.getVehicles().addVehicleType(vehType);
             }
 //        {
