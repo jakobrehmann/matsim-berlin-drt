@@ -49,7 +49,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * TODO: "java.lang.ArrayIndexOutOfBoundsException: -2386092 -- nothing to do with AStar
  *
  * Changed: 1) Reroute weight changed in config 2) Astar on 3) time variant off 4) marg utility of drt to 1000
- * 5) max vel to 25 
+ * 5) max vel to 25
+ *
+ * Change Change: 1) Time dependent back on 2) max vel back to 1000
  */
 
 public class RunBerlinDrt2 {
@@ -60,7 +62,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-15/C-BeelineAttemptReRoute";
+        String version = "2019-07-15/E-BeelineChangeParams2";
         String rootPath = null;
 
         switch (username) {
@@ -97,19 +99,19 @@ public class RunBerlinDrt2 {
 
         new File(outputDirectory).mkdirs();
 
-        config.controler().setLastIteration(5);
+        config.controler().setLastIteration(30);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
-        config.controler().setWritePlansInterval(1);
-        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(5);
+        config.controler().setWriteEventsInterval(5);
         config.transit().setUseTransit(true) ;
 
-        // Network Change Events
-//        config.network().setTimeVariantNetwork(true);
-//        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
+//         Network Change Events
+        config.network().setTimeVariantNetwork(true);
+        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
 
 
         // === ROUTER: ===
@@ -301,12 +303,12 @@ public class RunBerlinDrt2 {
             VehiclesFactory vf = scenario.getVehicles().getFactory();
             if (drt2) {
                 VehicleType vehType = vf.createVehicleType(Id.create("drt2", VehicleType.class));
-                vehType.setMaximumVelocity(25. / 3.6); //jr
+                vehType.setMaximumVelocity(1000. / 3.6); //jr
                 scenario.getVehicles().addVehicleType(vehType);
             }
             {
                 VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.drt, VehicleType.class));
-                vehType.setMaximumVelocity(25. / 3.6); //jr
+                vehType.setMaximumVelocity(1000. / 3.6); //jr
                 scenario.getVehicles().addVehicleType(vehType);
             }
 //        {
@@ -388,7 +390,7 @@ public class RunBerlinDrt2 {
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetXxx = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 //					paramSetXxx.setMode( TransportMode.walk ); // this does not work because sbb raptor treats it in a special way
                 paramSetXxx.setMode( "walk2" );
-                paramSetXxx.setRadius( 1000000 );
+                paramSetXxx.setRadius( 10 );
                 configRaptor.addIntermodalAccessEgress( paramSetXxx );
                 // (in principle, walk as alternative to drt will not work, since drt is always faster.  Need to give the ASC to the router!  However, with
                 // the reduced drt network we should be able to see differentiation.)
@@ -403,7 +405,7 @@ public class RunBerlinDrt2 {
             if ( drt2 ){
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetDrt2 = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetDrt2.setMode( "drt2" );
-                paramSetDrt2.setRadius( 1000000 );
+                paramSetDrt2.setRadius( 10 );
                 //				paramSetDrt2.setPersonFilterAttribute( null );
                 //				paramSetDrt2.setStopFilterAttribute( null );
                 configRaptor.addIntermodalAccessEgress( paramSetDrt2 );
