@@ -18,6 +18,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
+import java.io.File;
+
 
 /** "Zoomer" is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
  * placeholder mode, which can be configured in order to emulate bike, drt, etc.
@@ -27,9 +29,8 @@ import org.matsim.vehicles.VehiclesFactory;
 public class RunBerlinZoomer {
 
     public static void main(String[] args) {
-
         String username = "jakob";
-        String version = "2019-07-09";
+        String version = "2019-07-16/A-BackToZoomer";
         String rootPath = null;
 
         switch (username) {
@@ -43,7 +44,8 @@ public class RunBerlinZoomer {
                 System.out.println("Incorrect Base Path");
         }
 
-        String configFileName = rootPath + version + "/input/berlin-v5.4-1pct.config.xml";
+//        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
+        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
 
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName);
@@ -67,14 +69,17 @@ public class RunBerlinZoomer {
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
+        String outputDirectory = rootPath + version + "/output/";
+        new File(outputDirectory).mkdirs();
 
         config.controler().setLastIteration(50);
         config.global().setNumberOfThreads( 1 );
-        config.controler().setOutputDirectory(rootPath + version + "/output/C-NetworkChange/");
+        config.controler().setOutputDirectory(outputDirectory);
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
+        config.controler().setWriteEventsInterval(5);
 
         // QSim
         config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
@@ -116,8 +121,11 @@ public class RunBerlinZoomer {
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
 
-        // Network Change Events
-        config.network().setChangeEventsInputFile("networkChangeEvents.xml.gz");
+
+//         Network Change Events
+        config.network().setTimeVariantNetwork(true);
+        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
+
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
