@@ -50,6 +50,22 @@ Test Multimodal access egress to train stations (with bike, for instance)
 Test DRT
 Test combination
 
+Population
+We decided to limit our study on people who conducted activities within Frohnau (such as "home" or "work", but not
+"pt interaction"). The first step of this process was to draw a polygon that encompassed Frohnau on QGis and export it
+as a shape file. The second step was to write a Java script which loaded the berlin output population file and the
+Frohnau shape file, and produced a subpopulation as the output. The full population was filtered in the following manner:
++ if the agent is a actually a person (not freight, etc.)
++ if the coordinate of at least one activity falls within the bounds of the shape file
+
+
+Access Egress
+
+
+drt
+
+
+
 
 
 

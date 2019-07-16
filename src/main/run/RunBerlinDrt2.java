@@ -57,7 +57,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 public class RunBerlinDrt2 {
 
     enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
-    private static DrtMode drtMode = DrtMode.teleportBeeline  ;
+    private static DrtMode drtMode = DrtMode.teleportBasedOnNetworkRoute  ;
     private static boolean drt2 = false ;
 
     public static void main(String[] args) {
