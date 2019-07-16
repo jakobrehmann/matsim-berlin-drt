@@ -62,7 +62,7 @@ public class RunBerlinDrt2 {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-15/E-BeelineChangeParams2";
+        String version = "2019-07-16/A-TeleportNetwork";
         String rootPath = null;
 
         switch (username) {
@@ -103,7 +103,7 @@ public class RunBerlinDrt2 {
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
+//        config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
@@ -136,7 +136,8 @@ public class RunBerlinDrt2 {
                 }
                 // teleportation router for walk or bike is automatically defined.
             } else if (drtMode == DrtMode.teleportBasedOnNetworkRoute) {// (route as network route)
-                Set<String> networkModes = new HashSet<>();
+                Collection<String> networkModes =  new ArrayList<>(config.plansCalcRoute().getNetworkModes() );
+
                 networkModes.add(TransportMode.drt);
                 if (drt2) {
                     networkModes.add("drt2");
@@ -182,6 +183,10 @@ public class RunBerlinDrt2 {
             PlanCalcScoreConfigGroup.ModeParams walkScoreParams = new PlanCalcScoreConfigGroup.ModeParams("walk2");
             walkScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
             config.planCalcScore().addModeParams(walkScoreParams);
+
+            PlanCalcScoreConfigGroup.ModeParams NNWScoreParams = new PlanCalcScoreConfigGroup.ModeParams(TransportMode.non_network_walk);
+            NNWScoreParams.setMarginalUtilityOfTraveling(margUtlTravPt);
+            config.planCalcScore().addModeParams(NNWScoreParams);
 
 //// make everything really unattractive
 //            config.planCalcScore().getModes().get(TransportMode.car).setMarginalUtilityOfTraveling(-10.);
@@ -354,7 +359,7 @@ public class RunBerlinDrt2 {
             });
 
 
-            new ConfigWriter(config).write(rootPath + version + "/configWithDrtTest.xml");
+//            new ConfigWriter(config).write(rootPath + version + "/configWithDrtTest.xml");
 //        new NetworkWriter(scenario.getNetwork()).write(rootPath + version + "/networkWithDrt.xml");
             controler.run();
         }
@@ -390,7 +395,7 @@ public class RunBerlinDrt2 {
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetXxx = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 //					paramSetXxx.setMode( TransportMode.walk ); // this does not work because sbb raptor treats it in a special way
                 paramSetXxx.setMode( "walk2" );
-                paramSetXxx.setRadius( 10 );
+                paramSetXxx.setRadius( 10000 );
                 configRaptor.addIntermodalAccessEgress( paramSetXxx );
                 // (in principle, walk as alternative to drt will not work, since drt is always faster.  Need to give the ASC to the router!  However, with
                 // the reduced drt network we should be able to see differentiation.)
@@ -405,7 +410,7 @@ public class RunBerlinDrt2 {
             if ( drt2 ){
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetDrt2 = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetDrt2.setMode( "drt2" );
-                paramSetDrt2.setRadius( 10 );
+                paramSetDrt2.setRadius( 10000 );
                 //				paramSetDrt2.setPersonFilterAttribute( null );
                 //				paramSetDrt2.setStopFilterAttribute( null );
                 configRaptor.addIntermodalAccessEgress( paramSetDrt2 );
@@ -415,7 +420,7 @@ public class RunBerlinDrt2 {
                 // Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetWalk.setMode(TransportMode.walk);
-                paramSetWalk.setRadius(1);
+                paramSetWalk.setRadius(10000);
                 paramSetWalk.setPersonFilterAttribute(null);
                 paramSetWalk.setStopFilterAttribute(null);
                 configRaptor.addIntermodalAccessEgress(paramSetWalk );
@@ -431,7 +436,7 @@ public class RunBerlinDrt2 {
                 // Access Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetWalkA.setMode(TransportMode.access_walk);
-                paramSetWalkA.setRadius(1);
+                paramSetWalkA.setRadius(10000);
                 paramSetWalkA.setPersonFilterAttribute(null);
                 paramSetWalkA.setStopFilterAttribute(null);
                 configRaptor.addIntermodalAccessEgress(paramSetWalkA );
@@ -439,7 +444,7 @@ public class RunBerlinDrt2 {
                 // Egress Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetWalkE.setMode(TransportMode.egress_walk);
-                paramSetWalkE.setRadius(1);
+                paramSetWalkE.setRadius(10000);
                 paramSetWalkE.setPersonFilterAttribute(null);
                 paramSetWalkE.setStopFilterAttribute(null);
                 configRaptor.addIntermodalAccessEgress(paramSetWalkE );
@@ -447,7 +452,7 @@ public class RunBerlinDrt2 {
                 // Transit Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
                 paramSetWalkNN.setMode(TransportMode.transit_walk);
-                paramSetWalkNN.setRadius(1);
+                paramSetWalkNN.setRadius(10000);
                 paramSetWalkNN.setPersonFilterAttribute(null);
                 paramSetWalkNN.setStopFilterAttribute(null);
                 configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
