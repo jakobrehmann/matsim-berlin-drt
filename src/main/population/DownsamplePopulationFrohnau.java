@@ -42,8 +42,8 @@ public class DownsamplePopulationFrohnau {
                 default:
                     System.out.println("Incorrect Base Path");
             }
-            String inputPopFilename = rootPath + "/Input_global/berlin-v5.4-1pct.plans.xml.gz";
-            String outputPopFilename = rootPath  + "Input_global/Berlin-plans-Frohnau.xml";
+            String inputPopFilename = rootPath + "Input_global/plans/berlin-plans-10pct-original.xml.gz";
+            String outputPopFilename = rootPath  + "Input_global/plans/berlin-plans-10pct-frohnau.xml.gz";
             String AgentsWithinFrohnauFilename = rootPath + "Input_global/agentsWithinFrohnau.txt";
             String AgentsOutsideFrohnauFilename = rootPath + "Input_global/agentsOutsideFrohnau.txt";
             String filterShape = rootPath + "Frohnau/Frohnau-1.shp" ;

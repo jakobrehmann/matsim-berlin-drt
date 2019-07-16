@@ -15,6 +15,8 @@ import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -33,7 +35,7 @@ public class RunBerlinZoomer {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-16/A-BackToZoomer";
+        String version = "2019-07-16/B-ZoomerFrohnau";
         String rootPath = null;
 
         switch (username) {
@@ -57,7 +59,7 @@ public class RunBerlinZoomer {
         config.network().setInputFile("berlin-v5-network.xml.gz");
 //        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
 //        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
-        config.plans().setInputFile("berlin-plans-Frohnau.xml"); // 1% population in Frohnau
+        config.plans().setInputFile("plans/berlin-plans-1pct-frohnau.xml"); // 1% population in Frohnau
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -99,6 +101,10 @@ public class RunBerlinZoomer {
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
 
+        // Non Network Walk
+        ModeParams NNWparams = new ModeParams(TransportMode.non_network_walk);
+        NNWparams.setMarginalUtilityOfTraveling(0);
+        config.planCalcScore().addModeParams(NNWparams);
 
         // Zoomer Setup
         ModeParams zoomParams = new ModeParams("zoomer");
@@ -124,11 +130,12 @@ public class RunBerlinZoomer {
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
-//        //Adds Zoomer Attribute to Transit Schedule
-//        ArrayList<String> frohnauStops = readFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/FrohnauStopFacilities.txt") ;
-//        for (String stopId : frohnauStops) {
-//            scenario.getTransitSchedule().getFacilities().get(stopId).getAttributes().putAttribute( "zoomerAccessible", "true" );
-//        }
+        //Adds zoomerAccessible Attribute to Transit Schedule
+        ArrayList<String> frohnauStops = readFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/FrohnauStopFacilities.txt") ;
+        for (String stop : frohnauStops) {
+            Id<TransitStopFacility> stopId = Id.create(stop, TransitStopFacility.class);
+            scenario.getTransitSchedule().getFacilities().get(stopId).getAttributes().putAttribute( "zoomerAccessible", "true" );
+        }
 
 
         VehiclesFactory vf = scenario.getVehicles().getFactory();
@@ -149,7 +156,8 @@ public class RunBerlinZoomer {
             }
         } );
 
-        controler.run(); //
+//        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile("C:\\Users\\jakob\\Desktop\\schedTest.xml");
+        controler.run();
 
 
     }
@@ -161,7 +169,7 @@ public class RunBerlinZoomer {
         // Walk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetWalk.setMode(TransportMode.walk);
-        paramSetWalk.setRadius(1);
+        paramSetWalk.setRadius(3000);
         paramSetWalk.setPersonFilterAttribute(null);
         paramSetWalk.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalk );
@@ -169,7 +177,7 @@ public class RunBerlinZoomer {
         // Access Walk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetWalkA.setMode(TransportMode.access_walk);
-        paramSetWalkA.setRadius(1);
+        paramSetWalkA.setRadius(3000);
         paramSetWalkA.setPersonFilterAttribute(null);
         paramSetWalkA.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalkA );
@@ -177,7 +185,7 @@ public class RunBerlinZoomer {
         // Egress Walk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetWalkE.setMode(TransportMode.egress_walk);
-        paramSetWalkE.setRadius(1);
+        paramSetWalkE.setRadius(3000);
         paramSetWalkE.setPersonFilterAttribute(null);
         paramSetWalkE.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalkE );
@@ -185,7 +193,7 @@ public class RunBerlinZoomer {
         // Transit Walk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetWalkNN.setMode(TransportMode.transit_walk);
-        paramSetWalkNN.setRadius(1);
+        paramSetWalkNN.setRadius(3000);
         paramSetWalkNN.setPersonFilterAttribute(null);
         paramSetWalkNN.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
@@ -193,10 +201,10 @@ public class RunBerlinZoomer {
         // Zoomer
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetZoomer = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetZoomer.setMode("zoomer");
-        paramSetZoomer.setRadius(10000);
+        paramSetZoomer.setRadius(3000);
         paramSetZoomer.setPersonFilterAttribute(null);
-//        paramSetBike.setStopFilterAttribute("bikeAccessible");
-//        paramSetBike.setStopFilterValue("true");
+        paramSetZoomer.setStopFilterAttribute("zoomerAccessible");
+        paramSetZoomer.setStopFilterValue("true");
         configRaptor.addIntermodalAccessEgress(paramSetZoomer );
 
         return configRaptor;
