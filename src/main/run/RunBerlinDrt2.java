@@ -56,13 +56,13 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 public class RunBerlinDrt2 {
 
-    enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full }
-    private static DrtMode drtMode = DrtMode.teleportBasedOnNetworkRoute  ;
+    enum DrtMode { none, teleportBeeline, teleportBasedOnNetworkRoute, full , TeleportedModeFreespeedFactor }
+    private static DrtMode drtMode = DrtMode.full  ;
     private static boolean drt2 = false ;
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-16/A-TeleportNetwork";
+        String version = "2019-07-16/A-fullAttempt";
         String rootPath = null;
 
         switch (username) {
@@ -135,7 +135,14 @@ public class RunBerlinDrt2 {
                     config.plansCalcRoute().addModeRoutingParams(drt2Params);
                 }
                 // teleportation router for walk or bike is automatically defined.
-            } else if (drtMode == DrtMode.teleportBasedOnNetworkRoute) {// (route as network route)
+            }else if (drtMode == DrtMode.TeleportedModeFreespeedFactor) {// (configure teleportation router)
+                PlansCalcRouteConfigGroup.ModeRoutingParams drtParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+                drtParams.setMode(TransportMode.drt);
+                drtParams.setTeleportedModeFreespeedFactor(.1);
+                config.plansCalcRoute().addModeRoutingParams(drtParams);
+            // teleportation router for walk or bike is automatically defined.
+        }
+        else if (drtMode == DrtMode.teleportBasedOnNetworkRoute) {// (route as network route)
                 Collection<String> networkModes =  new ArrayList<>(config.plansCalcRoute().getNetworkModes() );
 
                 networkModes.add(TransportMode.drt);
@@ -435,7 +442,7 @@ public class RunBerlinDrt2 {
 
                 // Access Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalkA.setMode(TransportMode.access_walk);
+                paramSetWalkA.setMode("access_walk");
                 paramSetWalkA.setRadius(10000);
                 paramSetWalkA.setPersonFilterAttribute(null);
                 paramSetWalkA.setStopFilterAttribute(null);
@@ -443,7 +450,7 @@ public class RunBerlinDrt2 {
 
                 // Egress Walk
                 SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-                paramSetWalkE.setMode(TransportMode.egress_walk);
+                paramSetWalkE.setMode("egress_walk");
                 paramSetWalkE.setRadius(10000);
                 paramSetWalkE.setPersonFilterAttribute(null);
                 paramSetWalkE.setStopFilterAttribute(null);

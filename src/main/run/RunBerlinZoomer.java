@@ -4,6 +4,8 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
+
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.*;
@@ -13,7 +15,8 @@ import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehiclesFactory;
 
 
 /** "Zoomer" is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
@@ -118,6 +121,11 @@ public class RunBerlinZoomer {
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
+
+        VehiclesFactory vf = scenario.getVehicles().getFactory();
+        VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.ride, VehicleType.class));
+        vehType.setMaximumVelocity(25. / 3.6);
+        scenario.getVehicles().addVehicleType(vehType);
 
         // -- C O N T R O L E R --
         Controler controler = new Controler( scenario );
