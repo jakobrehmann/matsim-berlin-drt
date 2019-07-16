@@ -19,6 +19,9 @@ import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 
 /** "Zoomer" is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
@@ -49,15 +52,6 @@ public class RunBerlinZoomer {
 
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName);
-
-        // Input Files -- from server
-/*      config.network().setInputFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
-        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz");
-        config.plans().setInputPersonAttributeFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-person-attributes.xml.gz");
-        config.vehicles().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-mode-vehicle-types.xml");
-        config.transit().setTransitScheduleFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-transit-schedule.xml.gz");
-        config.transit().setVehiclesFile("http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5.4-transit-vehicles.xml.gz");
-*/
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
@@ -129,6 +123,13 @@ public class RunBerlinZoomer {
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
+
+//        //Adds Zoomer Attribute to Transit Schedule
+//        ArrayList<String> frohnauStops = readFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/FrohnauStopFacilities.txt") ;
+//        for (String stopId : frohnauStops) {
+//            scenario.getTransitSchedule().getFacilities().get(stopId).getAttributes().putAttribute( "zoomerAccessible", "true" );
+//        }
+
 
         VehiclesFactory vf = scenario.getVehicles().getFactory();
         VehicleType vehType = vf.createVehicleType(Id.create(TransportMode.ride, VehicleType.class));
@@ -242,5 +243,22 @@ public class RunBerlinZoomer {
         }
 
         return config ;
+    }
+
+    public static ArrayList<String> readFile (String fileName){
+        Scanner s ;
+        ArrayList<String> list = new ArrayList<String>();
+        try {
+            s = new Scanner(new File(fileName));
+            while (s.hasNext()){
+                list.add(s.next());
+            }
+            s.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+        return list;
     }
 }

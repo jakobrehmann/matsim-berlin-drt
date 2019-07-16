@@ -66,13 +66,30 @@ drt
 
 
 
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_65" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_5" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_81" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id=" x="4587437.2127672" y="5834207.360464694" linkRefId="pt_12961" name="Berlin, Zeltinger Platz/S Frohnau" isBlocking="false"/>
+<stopFacility id="" x="4587437.2127672" y="5834207.360464694" linkRefId="pt_15963" name="Berlin, Zeltinger Platz/S Frohnau" isBlocking="false"/>
+<stopFacility id="" x="4587437.2127672" y="5834207.360464694" linkRefId="pt_15983" name="Berlin, Zeltinger Platz/S Frohnau" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_12991" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_13069" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_13072" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_15982" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_12962" name="S Frohnau (Berlin)" isBlocking="false"/>
+<stopFacility id="" x="4587412.176538966" y="5834115.416970312" linkRefId="pt_12992" name="S Frohnau (Berlin)" isBlocking="false"/>
 
-
-
-
-
-
-
-
+060092201131
+060092201132
+060092201132.1
+070101000437
+070101000437.1
+070101000448
+070101001014
+070101001014.1
+070101001045
+070101001045.1
+070101001051
+070101001051.1
 
 
