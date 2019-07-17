@@ -24,8 +24,6 @@ import java.util.Collection;
  */
 
 public class RemoveAccessEgressWalkFromPlans {
-
-    // Set Paths
         public static void main(String[] args) {
 
             String username = "jakob";

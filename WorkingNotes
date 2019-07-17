@@ -56,7 +56,24 @@ We decided to limit our study on people who conducted activities within Frohnau 
 as a shape file. The second step was to write a Java script which loaded the berlin output population file and the
 Frohnau shape file, and produced a subpopulation as the output. The full population was filtered in the following manner:
 + if the agent is a actually a person (not freight, etc.)
++ if the activity type is not "pt interaction", "car interaction" or "ride interaction"
 + if the coordinate of at least one activity falls within the bounds of the shape file
+
+During the time of the project, modes "access_walk" and "egress_walk" were replaced in MATSim by "non_network_walk". The
+reason for this change relates to intermodal access and egress, and is therefore relevant to our project. The reasoning is
+that if you take a taxi to a train station and need to walk a short bit between those modes, then the walk would be an
+simultaneously be access walk (with respect to pt) and an egress walk (with respect to the taxi). Therefore the existing
+modes don't adequately describe intermodal transporation, and a new mode was coined, namely "non_network_walk". This mode
+replaces access_walk and egress_walk. We changed all instances of access_walk and egress_walk to non_network_walk in our
+input populations in the data preperation phase of our project.
+
+ * 1pct
+ * before : AGENTS --- inside:185 --- outside: 48838--- freight: 267 --- total: 49290
+ * after  : AGENTS --- inside:169 --- outside: 48854--- freight: 267 --- total: 49290
+ *
+ * 10pct:
+ * before : AGENTS --- inside:1955 --- outside: 489396--- freight: 2756 --- total: 494107
+ * after  : AGENTS --- inside:1845 --- outside: 489506--- freight: 2756 --- total: 494107
 
 
 Access Egress
