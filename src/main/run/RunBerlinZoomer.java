@@ -15,7 +15,6 @@ import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
@@ -28,6 +27,20 @@ import java.util.Scanner;
 
 /** "Zoomer" is a teleported mode that can only be used as an access/egress mode within a pt route. Zoomer is a
  * placeholder mode, which can be configured in order to emulate bike, drt, etc.
+ *
+ * TODO: Check plausibility of outputs using via.
+ * TODO: Do longer run with 10% scenario
+ * TODO: Verify NetworkChangeEvents
+ * TODO: Check FrohnauStopFacilities (Did we accidentally include bus stops as well?)
+ * TODO: Make Map with 3 km radius around S-Frohnau
+ * TODO: Do analyses
+ * TODO: Write Report
+ *
+ * Completed:
+ * TODO: Change Strategy Weights ** Done!
+ * TODO: Reduce MarginalUtilityOfTraveling for Zoomer ** Done! and still works
+ * TODO: Reduce TeleportedModeSpeed & Adjust BeelineDistanceFactor ** Changed and still works!
+ * TODO: Adjust Raptor Settings (radius etc.) -- ** Removed access/egress/transit and still works! but, if you remove walk, it no longer works...
  */
 
 
@@ -35,7 +48,7 @@ public class RunBerlinZoomer {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-16/B-ZoomerFrohnau";
+        String version = "2019-07-17/D-ZoomerMinorAdjustments";
         String rootPath = null;
 
         switch (username) {
@@ -49,17 +62,15 @@ public class RunBerlinZoomer {
                 System.out.println("Incorrect Base Path");
         }
 
-//        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
-        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
+        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
+//        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
 
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName);
 
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-//        config.plans().setInputFile("berlin-v5.4-1pct.plans.xml.gz"); // full 1% population
-//        config.plans().setInputFile("berlin-downsample.xml"); // 1% of 1% population
-        config.plans().setInputFile("plans/berlin-plans-1pct-frohnau.xml"); // 1% population in Frohnau
+        config.plans().setInputFile("plans/berlin-plans-1pct-frohnau-scrubbed.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
@@ -76,6 +87,7 @@ public class RunBerlinZoomer {
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
         config.controler().setWritePlansInterval(5);
         config.controler().setWriteEventsInterval(5);
+
 
         // QSim
         config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
@@ -101,28 +113,29 @@ public class RunBerlinZoomer {
         // Replanning
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
 
-        // Non Network Walk
-        ModeParams NNWparams = new ModeParams(TransportMode.non_network_walk);
-        NNWparams.setMarginalUtilityOfTraveling(0);
-        config.planCalcScore().addModeParams(NNWparams);
-
         // Zoomer Setup
+        double margUtilpt = config.planCalcScore().getModes().get("pt").getMarginalUtilityOfTraveling() ;
         ModeParams zoomParams = new ModeParams("zoomer");
-        zoomParams.setMarginalUtilityOfTraveling(100);
+        zoomParams.setMarginalUtilityOfTraveling(margUtilpt);
         config.planCalcScore().addModeParams(zoomParams);
 
         PlansCalcRouteConfigGroup.ModeRoutingParams zoomRoutingParams = new PlansCalcRouteConfigGroup.ModeRoutingParams();
         zoomRoutingParams.setMode("zoomer");
-        zoomRoutingParams.setBeelineDistanceFactor(1.3);
-        zoomRoutingParams.setTeleportedModeSpeed(10000.);
+        zoomRoutingParams.setBeelineDistanceFactor(1.625);
+        zoomRoutingParams.setTeleportedModeSpeed(25/3.6);
         config.plansCalcRoute().addModeRoutingParams(zoomRoutingParams);
+
+        // Non Network Walk Setup
+        double margUtilwalk = config.planCalcScore().getModes().get("walk").getMarginalUtilityOfTraveling() ;
+        ModeParams NNWparams = new ModeParams(TransportMode.non_network_walk);
+        NNWparams.setMarginalUtilityOfTraveling(margUtilwalk);
+        config.planCalcScore().addModeParams(NNWparams);
 
         // Raptor
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
 
-
-//         Network Change Events
+        // Network Change Events
         config.network().setTimeVariantNetwork(true);
         config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
 
@@ -156,10 +169,7 @@ public class RunBerlinZoomer {
             }
         } );
 
-//        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile("C:\\Users\\jakob\\Desktop\\schedTest.xml");
         controler.run();
-
-
     }
 
     private static SwissRailRaptorConfigGroup setupRaptorConfigGroup() {
@@ -173,30 +183,30 @@ public class RunBerlinZoomer {
         paramSetWalk.setPersonFilterAttribute(null);
         paramSetWalk.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalk );
-
-        // Access Walk
-        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-        paramSetWalkA.setMode(TransportMode.access_walk);
-        paramSetWalkA.setRadius(3000);
-        paramSetWalkA.setPersonFilterAttribute(null);
-        paramSetWalkA.setStopFilterAttribute(null);
-        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
-
-        // Egress Walk
-        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-        paramSetWalkE.setMode(TransportMode.egress_walk);
-        paramSetWalkE.setRadius(3000);
-        paramSetWalkE.setPersonFilterAttribute(null);
-        paramSetWalkE.setStopFilterAttribute(null);
-        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
-
-        // Transit Walk
-        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-        paramSetWalkNN.setMode(TransportMode.transit_walk);
-        paramSetWalkNN.setRadius(3000);
-        paramSetWalkNN.setPersonFilterAttribute(null);
-        paramSetWalkNN.setStopFilterAttribute(null);
-        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+////
+//        // Access Walk
+//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//        paramSetWalkA.setMode(TransportMode.access_walk);
+//        paramSetWalkA.setRadius(3000);
+//        paramSetWalkA.setPersonFilterAttribute(null);
+//        paramSetWalkA.setStopFilterAttribute(null);
+//        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
+//
+//        // Egress Walk
+//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//        paramSetWalkE.setMode(TransportMode.egress_walk);
+//        paramSetWalkE.setRadius(3000);
+//        paramSetWalkE.setPersonFilterAttribute(null);
+//        paramSetWalkE.setStopFilterAttribute(null);
+//        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
+//
+//        // Transit Walk
+//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+//        paramSetWalkNN.setMode(TransportMode.transit_walk);
+//        paramSetWalkNN.setRadius(3000);
+//        paramSetWalkNN.setPersonFilterAttribute(null);
+//        paramSetWalkNN.setStopFilterAttribute(null);
+//        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
 
         // Zoomer
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetZoomer = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();

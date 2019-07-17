@@ -65,7 +65,7 @@ that if you take a taxi to a train station and need to walk a short bit between 
 simultaneously be access walk (with respect to pt) and an egress walk (with respect to the taxi). Therefore the existing
 modes don't adequately describe intermodal transporation, and a new mode was coined, namely "non_network_walk". This mode
 replaces access_walk and egress_walk. We changed all instances of access_walk and egress_walk to non_network_walk in our
-input populations in the data preperation phase of our project.
+input populations in the data preparation phase of our project.
 
  * 1pct
  * before : AGENTS --- inside:185 --- outside: 48838--- freight: 267 --- total: 49290
@@ -79,7 +79,27 @@ input populations in the data preperation phase of our project.
 Access Egress
 
 
+
 drt
+
+Assumptions:
++ Marginal Utility of Travelling: we set our marginal utility of travelling for mode "Zoomer" to 0.0. This value matches
+the parameter for pt. Some people may Zoomer better than pt, since it is an experience closer to being chaueffered in a taxi.
+Others may rate the Zoomer experience as worse than pt, as you are stuck in an driverless car, with people you do not know. Therefore
+we took the safe value of 0.
++ We decided not to add any fares to our zoomer, since it meant to be used in conjunction with pt. The idea is that there
+should be no cost to transfer from zoomer to pt, and since agents are already charged for pt, we do not incur an additional charge.
++ We set the velocity of zoomer to 25 km/h. This is reasonable, since there is not a lot of traffic in Frohnau, so the zoomer vehicles
+will not often be stuck.
++ The standard beeline factor for car is 1.3, which is what we implemented as well. The beeline factor for drt is obviously higher
+than that of car, since drt vehicles often take detours in order to pick up or drop off more customers. We decided, however,
+that the factor shouldn't be increased by too much since all trips either start or end in S-Fronhau, meaning that the detours only
+occur in the pick-up phase or drop-off phase, and not in both. Also, we assume that an efficient alogorithm is developed for
+optimizing pick-ups and drop offs. Finally, in times of low demand, there is a high chance that only one agent will be picked up by the
+drt vehicle; therefore, in many trips the drt vehicle will not have to make any more detours than a car. Therefore, we set
+the beeline factor for drt to be 25% higher than that of car, namely 1.625.
++ We set the radius for zoomer to 3 km. This is realistic, the distance from S-Frohnau to the farsest bound of Frohnau was approximately
+3 km. Frohnau is relatively isolated from other parts of the city, there also won't be a lot of people using drt from outside of the city.
 
 
 
