@@ -24,10 +24,12 @@ import java.util.List;
  */
 public class NetworkSpeedChangeEventsFromExistingSimulation{
 	private static final int ENDTIME = 36 * 3600;
-	private static final int TIMESTEP = 15 * 60;
-	private static final String NETWORKFILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\berlin-v5-network.xml.gz";
-	private static final String SIMULATION_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\berlin-v5.3-1pct.output_events.xml.gz";
-	private static final String CHANGE_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\speedChangeEventsOutput";
+	private static final int TIMESTEP = 60 * 60;
+	
+	private static final String NETWORKFILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\berlin-v5-network.xml.gz";
+	private static final String SIMULATION_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\berlin-v5.3-1pct.output_events.xml.gz";
+	private static final String CHANGE_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\networkChangeEvents.xml.gz";
+	private static final String CHANGE_EVENTS_FILE_Test = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\networkChangeEventsTest.xml.gz";	
 	private static final double MINIMUMFREESPEED = 3;
 
 
@@ -41,7 +43,7 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 		new MatsimNetworkReader(network).readFile(NETWORKFILE);
 		TravelTimeCalculator tcc = readEventsIntoTravelTimeCalculator( network );
 		List<NetworkChangeEvent> networkChangeEvents = createNetworkChangeEvents( network, tcc );
-		new NetworkChangeEventsWriter().write(CHANGE_EVENTS_FILE, networkChangeEvents);
+		new NetworkChangeEventsWriter().write(CHANGE_EVENTS_FILE_Test, networkChangeEvents);
 		
 	}
 
@@ -63,7 +65,8 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 					NetworkChangeEvent nce = new NetworkChangeEvent(time);
 					nce.addLink(l);
 					double newFreespeed = length / newTravelTime;
-					if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
+//					if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
+					newFreespeed = 0.;
 					ChangeValue freespeedChange = new ChangeValue(ChangeType.ABSOLUTE_IN_SI_UNITS, newFreespeed);
 					nce.setFreespeedChange(freespeedChange);
 
