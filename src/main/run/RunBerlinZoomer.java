@@ -47,8 +47,8 @@ import java.util.Scanner;
 public class RunBerlinZoomer {
 
     public static void main(String[] args) {
-        String username = "jakob";
-        String version = "2019-07-17/D-ZoomerMinorAdjustments";
+        String username = "david";
+        String version = "2019-07-21/02_Test";
         String rootPath = null;
 
         switch (username) {
@@ -74,7 +74,12 @@ public class RunBerlinZoomer {
         config.plans().setInputFile("plans/berlin-plans-1pct-frohnau-scrubbed.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
-        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
+        
+        //Take the adjusted transit schedule for Test
+        
+        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule_Adjusted.xml.gz");
+        
+        
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
         String outputDirectory = rootPath + version + "/output/";
