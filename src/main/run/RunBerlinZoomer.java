@@ -62,6 +62,7 @@ public class RunBerlinZoomer {
                 System.out.println("Incorrect Base Path");
         }
 
+        
         String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
 //        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
 
