@@ -145,13 +145,40 @@ public class AdjustPT {
 			}
 		}
 		
-		for (Id<Link> link: oldLinks) {
+		//new method "Cancel no. of links as no. of Stops were cancelled
+		//runs with error unfortunately
+		
+		int linkOffSet;
+		
+		//determine where to start and stop adding links based on oldStops
+		if (oldStops.get(0) == newStops.get(0)) {
 			
-			if (!linksToCancel.contains(link.toString())) {
-				
-				newLinks.add(link);
-			}
+			// Case: Route is shortened in the end
+			linkOffSet = 0;
+			
+		} else {
+			
+			// Case: Route is shortened at the beginning
+			linkOffSet = (oldStops.size() - newStops.size());
 		}
+		
+		
+		for (int link = 0; link <= newStops.size() - 1; link++) {
+			
+			newLinks.add(oldLinks.get(link + linkOffSet));
+			
+		}
+		
+		
+		// old method "Cancel if link is in list..."
+		
+//		for (Id<Link> link: oldLinks) {
+//			
+//			if (!linksToCancel.contains(link.toString())) {
+//				
+//				newLinks.add(link);
+//			}
+//		}
 		
 		
 		TransitRoute newRoute = scenario.getTransitSchedule().getFactory().createTransitRoute(
