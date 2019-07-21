@@ -56,7 +56,7 @@ public class RunBerlinZoomer {
                 rootPath = "C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/";
                 break;
             case "david":
-                rootPath = "C:/Users/david/ENTER_PATH_HERE";
+                rootPath = "D:/Eigene Dateien/Dokumente/Uni/tubCloud/Master/02_SoSe2019/MatSim/DRT/PolicyCase/";
                 break;
             default:
                 System.out.println("Incorrect Base Path");
@@ -137,14 +137,14 @@ public class RunBerlinZoomer {
 
         // Network Change Events
         config.network().setTimeVariantNetwork(true);
-        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
+        config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents.xml");
 
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
         //Adds zoomerAccessible Attribute to Transit Schedule
-        ArrayList<String> frohnauStops = readFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/FrohnauStopFacilities.txt") ;
+        ArrayList<String> frohnauStops = readFile(rootPath + "Input_global/FrohnauStopFacilities.txt") ;
         for (String stop : frohnauStops) {
             Id<TransitStopFacility> stopId = Id.create(stop, TransitStopFacility.class);
             scenario.getTransitSchedule().getFacilities().get(stopId).getAttributes().putAttribute( "zoomerAccessible", "true" );

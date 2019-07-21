@@ -70,7 +70,7 @@ public class RunBerlinDrt2 {
                 rootPath = "C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/";
                 break;
             case "david":
-                rootPath = "C:/Users/david/ENTER_PATH_HERE";
+                rootPath = "D:/Eigene Dateien/Dokumente/Uni/tubCloud/Master/02_SoSe2019/MatSim/DRT/PolicyCase/";
                 break;
             default:
                 System.out.println("Incorrect Base Path");
@@ -111,7 +111,7 @@ public class RunBerlinDrt2 {
 
 //         Network Change Events
         config.network().setTimeVariantNetwork(true);
-        config.network().setChangeEventsInputFile("C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/Input_global/networkChangeEvents.xml");
+        config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents.xml");
 
 
         // === ROUTER: ===

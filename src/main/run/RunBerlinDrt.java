@@ -55,7 +55,7 @@ public class RunBerlinDrt {
                 rootPath = "C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/";
                 break;
             case "david":
-                rootPath = "C:/Users/david/ENTER_PATH_HERE";
+                rootPath = "D:/Eigene Dateien/Dokumente/Uni/tubCloud/Master/02_SoSe2019/MatSim/DRT/PolicyCase/";
                 break;
             default:
                 System.out.println("Incorrect Base Path");
@@ -81,7 +81,7 @@ public class RunBerlinDrt {
 //      config.plans().setRemovingUnneccessaryPlanAttributes(true);
 
         config.controler().setLastIteration(15);
-        config.controler().setOutputDirectory("C:\\Users\\jakob\\tubCloud\\Shared\\DRT\\PolicyCase\\2019-07-08\\output\\drt-A");
+        config.controler().setOutputDirectory(rootPath + "2019-07-08/output/drt-A");
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
