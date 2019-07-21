@@ -114,6 +114,7 @@ public class RunBerlinDrt2 {
         config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents.xml");
 
 
+        
         // === ROUTER: ===
         {
             config.plansCalcRoute().setInsertingAccessEgressWalk(true);

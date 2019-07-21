@@ -68,6 +68,7 @@ public class RunBerlinZoomer {
         // -- C O N F I G --
         Config config = ConfigUtils.loadConfig( configFileName);
 
+        
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
         config.plans().setInputFile("plans/berlin-plans-1pct-frohnau-scrubbed.xml.gz");

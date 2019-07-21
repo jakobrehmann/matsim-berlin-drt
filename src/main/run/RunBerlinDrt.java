@@ -251,6 +251,7 @@ public class RunBerlinDrt {
         return config ;
     }
 
+    
     public static ArrayList<String> readIdFile(String fileName){
         Scanner s ;
         ArrayList<String> list = new ArrayList<>();
