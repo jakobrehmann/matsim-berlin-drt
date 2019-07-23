@@ -15,9 +15,7 @@ import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
-import org.matsim.pt.utils.TransitScheduleValidator;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -86,9 +84,7 @@ public class RunBerlinZoomer {
         //Take the adjusted transit schedule for Test
 //        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule_Adjusted.xml.gz");
-
-
-        
+    
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
         String outputDirectory = rootPath + version + "/output/";

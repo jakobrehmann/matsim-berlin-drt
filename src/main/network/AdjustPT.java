@@ -20,6 +20,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
@@ -129,7 +130,8 @@ public class AdjustPT {
 	public static TransitRoute copyRoute(Scenario scenario, TransitRoute route, Set<String> facilitiesToCancel, Set<String> linksToCancel) {
 		
 		// createNewRoute
-
+		
+		
 		List<Id<Link>> oldLinks = new ArrayList<>();
 		
 		oldLinks.add(route.getRoute().getStartLinkId());
@@ -193,7 +195,15 @@ public class AdjustPT {
 				route.getId(),
 				RouteUtils.createNetworkRoute(newLinks, scenario.getNetwork()),
 				newStops,
-				TransportMode.pt);
+				"bus");
+		
+		
+		for(Departure departure: route.getDepartures().values()) {
+			
+			newRoute.addDeparture(departure);
+		}
+		
+			
 		
 		return newRoute;
 		
