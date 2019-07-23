@@ -26,25 +26,35 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 	private static final int ENDTIME = 36 * 3600;
 	private static final int TIMESTEP = 60 * 60;
 	
-	private static final String NETWORKFILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\berlin-v5-network.xml.gz";
-	private static final String SIMULATION_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\berlin-v5.3-1pct.output_events.xml.gz";
-	private static final String CHANGE_EVENTS_FILE = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\networkChangeEvents.xml.gz";
-	private static final String CHANGE_EVENTS_FILE_Test = "D:\\Eigene Dateien\\Dokumente\\Uni\\tubCloud\\Master\\02_SoSe2019\\MatSim\\DRT\\PolicyCase\\Input_global\\networkChangeEventsTest.xml.gz";	
+
 	private static final double MINIMUMFREESPEED = 3;
 
 
 	public static void main(String[] args) {
-		NetworkSpeedChangeEventsFromExistingSimulation ncg = new NetworkSpeedChangeEventsFromExistingSimulation();
-		ncg.run();
-	}
+		String username = "jakob";
+		String rootPath = null;
 
-	private void run() {
+		switch (username) {
+			case "jakob":
+				rootPath = "C:/Users/jakob/tubCloud/Shared/DRT/PolicyCase/";
+				break;
+			case "david":
+				rootPath = "D:/Eigene Dateien/Dokumente/Uni/tubCloud/Master/02_SoSe2019/MatSim/DRT/PolicyCase/";
+				break;
+			default:
+				System.out.println("Incorrect Base Path");
+		}
+		  final String NETWORKFILE = rootPath + "/Input_global/berlin-v5-network.xml.gz";
+		  final String SIMULATION_EVENTS_FILE = rootPath + "/Input_global/events/berlin-v5.3-10pct.output_events.xml.gz";
+		  final String CHANGE_EVENTS_FILE = rootPath + "/Input_global/networkChangeEvents-10pct.xml.gz";
+
 		Network network = NetworkUtils.createNetwork() ;
 		new MatsimNetworkReader(network).readFile(NETWORKFILE);
-		TravelTimeCalculator tcc = readEventsIntoTravelTimeCalculator( network );
+		TravelTimeCalculator tcc = readEventsIntoTravelTimeCalculator( network, SIMULATION_EVENTS_FILE );
 		List<NetworkChangeEvent> networkChangeEvents = createNetworkChangeEvents( network, tcc );
-		new NetworkChangeEventsWriter().write(CHANGE_EVENTS_FILE_Test, networkChangeEvents);
-		
+		new NetworkChangeEventsWriter().write(CHANGE_EVENTS_FILE, networkChangeEvents);
+
+
 	}
 
 	public static List<NetworkChangeEvent> createNetworkChangeEvents( Network network, TravelTimeCalculator tcc ) {
@@ -65,8 +75,7 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 					NetworkChangeEvent nce = new NetworkChangeEvent(time);
 					nce.addLink(l);
 					double newFreespeed = length / newTravelTime;
-//					if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
-					newFreespeed = 0.;
+					if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
 					ChangeValue freespeedChange = new ChangeValue(ChangeType.ABSOLUTE_IN_SI_UNITS, newFreespeed);
 					nce.setFreespeedChange(freespeedChange);
 
@@ -78,12 +87,12 @@ public class NetworkSpeedChangeEventsFromExistingSimulation{
 		return networkChangeEvents ;
 	}
 
-	public static TravelTimeCalculator readEventsIntoTravelTimeCalculator( Network network ) {
+	public static TravelTimeCalculator readEventsIntoTravelTimeCalculator( Network network, String simFile ) {
 		EventsManager manager = EventsUtils.createEventsManager();
 		TravelTimeCalculator.Builder builder = new TravelTimeCalculator.Builder( network );
 		TravelTimeCalculator tcc = builder.build();
 		manager.addHandler(tcc);
-		new MatsimEventsReader(manager).readFile(SIMULATION_EVENTS_FILE);
+		new MatsimEventsReader(manager).readFile(simFile);
 		return tcc ;
 	}
 

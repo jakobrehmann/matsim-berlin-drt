@@ -38,18 +38,19 @@ import java.util.Scanner;
  * TODO: Write Report
  *
  * Completed:
- * TODO: Change Strategy Weights ** Done!
- * TODO: Reduce MarginalUtilityOfTraveling for Zoomer ** Done! and still works
- * TODO: Reduce TeleportedModeSpeed & Adjust BeelineDistanceFactor ** Changed and still works!
- * TODO: Adjust Raptor Settings (radius etc.) -- ** Removed access/egress/transit and still works! but, if you remove walk, it no longer works...
+ * + Change Strategy Weights ** Done!
+ * + Verify NetworkChangeEvents ** Done!
+ * + Reduce MarginalUtilityOfTraveling for Zoomer ** Done! and still works
+ * + Reduce TeleportedModeSpeed & Adjust BeelineDistanceFactor ** Changed and still works!
+ * + Adjust Raptor Settings (radius etc.) -- ** Removed access/egress/transit and still works! but, if you remove walk, it no longer works...
  */
 
 
 public class RunBerlinZoomer {
 
     public static void main(String[] args) {
-        String username = "david";
-        String version = "2019-07-21/02_Test";
+        String username = "jakob";
+        String version = "2019-07-23/04_FullRun";
         String rootPath = null;
 
         switch (username) {
@@ -64,10 +65,13 @@ public class RunBerlinZoomer {
         }
 
         
-        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
-//        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
+
 
         // -- C O N F I G --
+        //        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
+        String configFileName = rootPath + "Input_global/berlin-v5.4-10pct.config.xml";
+
+//        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         
@@ -86,14 +90,14 @@ public class RunBerlinZoomer {
         String outputDirectory = rootPath + version + "/output/";
         new File(outputDirectory).mkdirs();
 
-        config.controler().setLastIteration(50);
+        config.controler().setLastIteration(500);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
-        config.controler().setWritePlansInterval(5);
-        config.controler().setWriteEventsInterval(5);
+        config.controler().setWritePlansInterval(100);
+        config.controler().setWriteEventsInterval(100);
 
 
         // QSim
@@ -142,9 +146,9 @@ public class RunBerlinZoomer {
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
 
-        // Network Change Events
+//         Network Change Events
         config.network().setTimeVariantNetwork(true);
-        config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents.xml");
+        config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents-10pct.xml.gz");
 
 
         // -- S C E N A R I O --
@@ -178,8 +182,9 @@ public class RunBerlinZoomer {
 
 
 
-        TransitScheduleValidator.ValidationResult validationResult = TransitScheduleValidator.validateAll(scenario.getTransitSchedule(), scenario.getNetwork());
-        TransitScheduleValidator.printResult(validationResult);
+//        TransitScheduleValidator.ValidationResult validationResult = TransitScheduleValidator.validateAll(scenario.getTransitSchedule(), scenario.getNetwork());
+//        TransitScheduleValidator.printResult(validationResult);
+        new ConfigWriter(scenario.getConfig()).write(rootPath + version + "/configTest.xml");
         controler.run();
     }
 
@@ -230,7 +235,6 @@ public class RunBerlinZoomer {
 
         return configRaptor;
     }
-
 
     static Config SetupActivityParams(Config config) {
         // activities:
