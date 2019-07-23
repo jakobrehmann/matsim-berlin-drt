@@ -16,6 +16,7 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.pt.utils.TransitScheduleValidator;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -47,7 +48,7 @@ import java.util.Scanner;
 public class RunBerlinZoomer {
 
     public static void main(String[] args) {
-        String username = "jakob";
+        String username = "david";
         String version = "2019-07-21/02_Test";
         String rootPath = null;
 
@@ -179,7 +180,7 @@ public class RunBerlinZoomer {
 
         TransitScheduleValidator.ValidationResult validationResult = TransitScheduleValidator.validateAll(scenario.getTransitSchedule(), scenario.getNetwork());
         TransitScheduleValidator.printResult(validationResult);
-//        controler.run();
+        controler.run();
     }
 
     private static SwissRailRaptorConfigGroup setupRaptorConfigGroup() {
