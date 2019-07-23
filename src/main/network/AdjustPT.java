@@ -130,7 +130,14 @@ public class AdjustPT {
 		
 		// createNewRoute
 
-		List<Id<Link>> oldLinks = route.getRoute().getLinkIds();
+		List<Id<Link>> oldLinks = new ArrayList<>();
+		
+		oldLinks.add(route.getRoute().getStartLinkId());
+		for(Id<Link> id: route.getRoute().getLinkIds()) {
+			oldLinks.add(id);
+		}
+		oldLinks.add(route.getRoute().getEndLinkId());
+		
 		List<Id<Link>> newLinks = new ArrayList<Id<Link>>();
 		
 		List<TransitRouteStop> oldStops = route.getStops();
