@@ -78,7 +78,7 @@ public class RunBerlinZoomer {
         
         //Take the adjusted transit schedule for Test
         
-        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule_Adjusted.xml.gz");
+        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule_Adjusted.xml");
         
         
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
