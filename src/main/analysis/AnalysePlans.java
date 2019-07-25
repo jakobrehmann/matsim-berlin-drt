@@ -46,7 +46,7 @@ class AnalysePlans {
 
 
         BufferedWriter bw = IOUtils.getBufferedWriter(outputFile);
-        String headers = "nPersons, nCarLegs, nCarPerPerson, nCarsUsingPersons, nPtLegs, totalCarDistance, totalPtDistance, nZoomerLegs, totalZoomerDistance";
+        String headers = "nPersons, nCarLegs, nCarPerPerson, nCarsUsingPersons, nPtLegs, totalCarDistance, totalPtDistance, nZoomerLegs, totalZoomerDistance, totalDistance";
         bw.write(headers);
         bw.newLine();
 
@@ -71,6 +71,7 @@ class AnalysePlans {
             double totalCarDistance = 0. ;
             double totalPtDistance = 0. ;
             double totalZoomerDistance = 0;
+            double totalDistance = 0 ;
 
             for ( Person person : pop.getPersons().values() ) {
                 boolean carUser = false ;
@@ -89,6 +90,7 @@ class AnalysePlans {
 //
 //                if
                 for ( Leg leg : TripStructureUtils.getLegs( plan ) ) {
+                    totalDistance += leg.getRoute().getDistance() ;
                     if ( TransportMode.car.equals( leg.getMode() ) ) {
                         nCarLegs++ ;
                         carUser = true ;
@@ -107,7 +109,7 @@ class AnalysePlans {
             bw.newLine();
             bw.write(pop.getPersons().size() + "," + nCarLegs + "," + 1.*nCarLegs/pop.getPersons().size()+ "," +
                     nCarUsingPersons + "," + nPtLegs + "," + totalCarDistance/1000 + "," + totalPtDistance/1000 + "," +
-                    nZoomerLegs + "," + totalZoomerDistance/1000);
+                    nZoomerLegs + "," + totalZoomerDistance/1000 + "," + totalDistance/1000);
 
             // could the people walk further to pt stops in the past?
 

@@ -14,6 +14,7 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.pt.utils.TransitScheduleValidator;
@@ -50,7 +51,7 @@ public class RunBerlinZoomer {
 
     public static void main(String[] args) {
         String username = "jakob";
-        String version = "2019-07-23/04_FullRun";
+        String version = "2019-07-25/01_newAttempt";
         String rootPath = null;
 
         switch (username) {
@@ -69,15 +70,15 @@ public class RunBerlinZoomer {
 
         // -- C O N F I G --
         //        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
-        String configFileName = rootPath + "Input_global/berlin-v5.4-10pct.config.xml";
+//        String configFileName = rootPath + "Input_global/berlin-v5.4-10pct.config.xml";
 
-//        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
+        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         
         // Input Files -- local
         config.network().setInputFile("berlin-v5-network.xml.gz");
-        config.plans().setInputFile("plans/berlin-plans-1pct-frohnau-scrubbed.xml.gz");
+        config.plans().setInputFile("plans/berlin-plans-10pct-frohnau-scrubbed.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
         
@@ -90,14 +91,16 @@ public class RunBerlinZoomer {
         String outputDirectory = rootPath + version + "/output/";
         new File(outputDirectory).mkdirs();
 
-        config.controler().setLastIteration(500);
+//        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.failIfDirectoryExists);
+
+        config.controler().setLastIteration(10);
         config.global().setNumberOfThreads( 1 );
         config.controler().setOutputDirectory(outputDirectory);
         config.controler().setRoutingAlgorithmType( FastAStarLandmarks );
         config.transit().setUseTransit(true) ;
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
-        config.controler().setWritePlansInterval(100);
-        config.controler().setWriteEventsInterval(100);
+        config.controler().setWritePlansInterval(5);
+        config.controler().setWriteEventsInterval(5);
 
 
         // QSim
@@ -150,6 +153,9 @@ public class RunBerlinZoomer {
         config.network().setTimeVariantNetwork(true);
         config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents-10pct.xml.gz");
 
+//
+//        config.plansCalcRoute().removeModeRoutingParams(TransportMode.egress_walk);
+//        config.plansCalcRoute().removeModeRoutingParams(TransportMode.access_walk);
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -200,29 +206,37 @@ public class RunBerlinZoomer {
         paramSetWalk.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalk );
 ////
-//        // Access Walk
-//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-//        paramSetWalkA.setMode(TransportMode.access_walk);
-//        paramSetWalkA.setRadius(3000);
-//        paramSetWalkA.setPersonFilterAttribute(null);
-//        paramSetWalkA.setStopFilterAttribute(null);
-//        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
-//
-//        // Egress Walk
-//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-//        paramSetWalkE.setMode(TransportMode.egress_walk);
-//        paramSetWalkE.setRadius(3000);
-//        paramSetWalkE.setPersonFilterAttribute(null);
-//        paramSetWalkE.setStopFilterAttribute(null);
-//        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
-//
-//        // Transit Walk
-//        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
-//        paramSetWalkNN.setMode(TransportMode.transit_walk);
-//        paramSetWalkNN.setRadius(3000);
-//        paramSetWalkNN.setPersonFilterAttribute(null);
-//        paramSetWalkNN.setStopFilterAttribute(null);
-//        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+        // Access Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkA.setMode(TransportMode.access_walk);
+        paramSetWalkA.setRadius(3000);
+        paramSetWalkA.setPersonFilterAttribute(null);
+        paramSetWalkA.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkA );
+
+        // Egress Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkE = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkE.setMode(TransportMode.egress_walk);
+        paramSetWalkE.setRadius(3000);
+        paramSetWalkE.setPersonFilterAttribute(null);
+        paramSetWalkE.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkE );
+
+        // Transit Walk
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNN = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkNN.setMode(TransportMode.transit_walk);
+        paramSetWalkNN.setRadius(3000);
+        paramSetWalkNN.setPersonFilterAttribute(null);
+        paramSetWalkNN.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkNN );
+
+        // Non Network
+        SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkNonNet = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+        paramSetWalkNonNet.setMode(TransportMode.non_network_walk);
+        paramSetWalkNonNet.setRadius(3000);
+        paramSetWalkNonNet.setPersonFilterAttribute(null);
+        paramSetWalkNonNet.setStopFilterAttribute(null);
+        configRaptor.addIntermodalAccessEgress(paramSetWalkNonNet );
 
         // Zoomer
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetZoomer = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();

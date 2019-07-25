@@ -119,7 +119,7 @@ public class DownsamplePopulationFrohnau {
             new PopulationWriter(pop2).write(outputPopFilename);
 
 
-            // Scub: Replace Access Walk and Egress Walk with Non-Network-Walk
+            // Scrub: Replace Access Walk and Egress Walk with Non-Network-Walk
             pop2 = RemoveAccessEgressWalkFromPlans(pop2);
 
             // Print Frohnau Population (after scrub)
