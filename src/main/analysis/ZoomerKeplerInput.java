@@ -22,7 +22,9 @@ import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.GeotoolsTransformation;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
 import com.opencsv.CSVWriter;
 
@@ -62,7 +64,7 @@ public class ZoomerKeplerInput {
         new PopulationReader(sc).readFile(inputPopFilename);
         final Population pop = sc.getPopulation();
         
- //       GeotoolsTransformation transformation = new GeotoolsTransformation("GK4", "WGS84");
+        CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation(TransformationFactory.GK4, TransformationFactory.WGS84);
         
         //start writing csvfile
         try {
@@ -72,79 +74,57 @@ public class ZoomerKeplerInput {
 			CSVWriter writer = new CSVWriter(outputfile);
 			
 			// Write header line
-			String[] header = {"start_lat", "start_lng", "end_lat", "end_lng", "time"};
+			String[] header = {"start_lng", "start_lat", "end_lng", "end_lat", "time"};
 			writer.writeNext(header);
 			
 			List<Plan> selectedPlans = pop.getPersons().values().stream()
 					.map(person -> person.getSelectedPlan())
 					.collect(Collectors.toList());
 			
-			HashMap<PlanElement, PlanElement> activityBeforeElement = new HashMap<>();
-			HashMap<PlanElement, PlanElement> activityAfterElement = new HashMap<>();
 			
-			List<PlanElement> zoomerElements = selectedPlans.stream()
-					.flatMap(plan -> zoomerInPlan(plan).stream())
-					.collect(Collectors.toList());
+			HashMap<PlanElement, Activity> activityBeforeElement = new HashMap<>();
+			HashMap<PlanElement, Activity> activityAfterElement = new HashMap<>();
+			List<PlanElement> zoomerElements = new ArrayList<>();
 			
-			System.out.println(zoomerElements);
 			
-
+			selectedPlans.stream()
+				.forEach(plan ->{
+			
+					plan.getPlanElements().stream()
+						.filter(element -> element instanceof Leg)
+						.filter(element -> ((Leg)element).getMode().contains("zoomer"))					
+						.forEach(element -> {
+							
+							zoomerElements.add(element);
+							
+							activityBeforeElement.put(element, (Activity)(plan.getPlanElements().get((plan.getPlanElements().indexOf(element)-1))));
+							activityAfterElement.put(element, (Activity)(plan.getPlanElements().get((plan.getPlanElements().indexOf(element)+1))));
+							
+						});
 			});
-//
-//			for(Plan plan: selectedPlans) {
-//				
-//				List<PlanElement> zoomerElements = zoomerInPlan(plan);
-//						
-//						
-//				zoomerElements.stream()
-//				.forEach(element -> {
-//					
-//					
-//					Coord coordStartZoomer = ((Activity)activityBeforeElement(element)).getCoord();
-//					Coord coordEndZoomer = ((Activity)activityAfterElement(element)).getCoord();
-//					
-//					String x_coordStartZoomer = Double.toString(transformation.transform(coordStartZoomer).getX());
-//					String y_coordStartZoomer = Double.toString(transformation.transform(coordStartZoomer).getY());
-//					String x_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getX());
-//					String y_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getY());
-//					String drtTime = Double.toString(((Leg)element).getDepartureTime());
-//					
-//					String[] nextLine = {x_coordStartZoomer, y_coordStartZoomer, x_coordEndZoomer, y_coordEndZoomer, drtTime};
-//					writer.writeNext(nextLine);
-//					
-//				});
-//				
-//			}
 
-  
-			
-			
-
-//	            
-//	 
-//	 
-//	            for(Leg leg: legsWithZoomerMode) {
-//	            	
-//	            	for(int index=0; index < planElements.size();index++) {
-//	            		
-//	            		element = planElements.get(index);
-//	            		
-//	            		if(element instanceof Leg) {
-//	            			
-//	            			if((Leg)element == leg) {
-//	            				
-//	            				activityBeforeLeg.put(leg, (Activity)(planElements.get(index-1)));
-//	            				activityAfterLeg.put(leg, (Activity)(planElements.get(index+1)));
-//	            			}            			       			
-//	            		}
-//	            	}
-//	            	
-//	            	
-//	            	
-//	            	
-//	            }
-//	            
-	            
+						
+						
+			zoomerElements.stream()
+				.forEach(element -> {
+					
+					
+					Coord coordStartZoomer = activityBeforeElement.get(element).getCoord();
+					Coord coordEndZoomer = activityAfterElement.get(element).getCoord();
+					
+					String x_coordStartZoomer = Double.toString(transformation.transform(coordStartZoomer).getX());
+					String y_coordStartZoomer = Double.toString(transformation.transform(coordStartZoomer).getY());
+					String x_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getX());
+					String y_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getY());
+					String drtTime = Double.toString(((Leg)element).getDepartureTime());
+					
+					String[] nextLine = {x_coordStartZoomer, y_coordStartZoomer, x_coordEndZoomer, y_coordEndZoomer, drtTime};
+					
+					writer.writeNext(nextLine);
+					
+				});
+				
+ 
      
 	        
 	        writer.close();
@@ -156,13 +136,4 @@ public class ZoomerKeplerInput {
 
 	}
 	
-	public static List<PlanElement> zoomerInPlan(Plan plan) {
-		
-		return plan.getPlanElements().stream()
-				.filter(element -> element instanceof Leg)
-				.filter(element -> ((Leg)element).getMode().contains("zoomer"))					
-				.collect(Collectors.toList());
-	}
-	
-
 }
