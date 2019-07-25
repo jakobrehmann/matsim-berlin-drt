@@ -36,7 +36,7 @@ public class ZoomerKeplerInput {
 		
         String username = "david";
         String rootPath = null;
-        String percent = "1";
+        String percent = "10";
 
         switch (username) {
             case "jakob":
@@ -51,8 +51,9 @@ public class ZoomerKeplerInput {
         
         //Set paths for input and csvOutput
         
-        String inputPopFilename = rootPath + "2019-07-17/C-ZoomerNormalStrategyWeights/output/berlin-v5.4-" + percent + "pct.output_plans.xml.gz";
-        String csvOutputPath = rootPath + "Report_global/drtLinkShapes.csv";
+        String inputPopFilename = rootPath + "2019-07-23/05_FullRun/output/berlin-v5.4-" + percent + "pct.output_plans.xml.gz";
+//      String csvOutputPath = rootPath + "Report_global/walkingOD.csv";
+        String csvOutputPath = rootPath + "Report_global/zoomerOD.csv";
         
         //create new file object
         File file = new File(csvOutputPath);
@@ -92,6 +93,7 @@ public class ZoomerKeplerInput {
 			
 					plan.getPlanElements().stream()
 						.filter(element -> element instanceof Leg)
+	//					.filter(element -> ((Leg)element).getMode().contains("access_walk")||((Leg)element).getMode().contains("egress_walk"))
 						.filter(element -> ((Leg)element).getMode().contains("zoomer"))					
 						.forEach(element -> {
 							
@@ -117,7 +119,7 @@ public class ZoomerKeplerInput {
 					String x_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getX());
 					String y_coordEndZoomer = Double.toString(transformation.transform(coordEndZoomer).getY());
 					String drtTime = Double.toString(((Leg)element).getDepartureTime());
-					
+
 					String[] nextLine = {x_coordStartZoomer, y_coordStartZoomer, x_coordEndZoomer, y_coordEndZoomer, drtTime};
 					
 					writer.writeNext(nextLine);
