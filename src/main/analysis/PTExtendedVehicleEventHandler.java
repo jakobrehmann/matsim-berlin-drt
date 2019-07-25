@@ -9,14 +9,28 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
+import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
+import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
+import org.matsim.core.api.experimental.events.VehicleArrivesAtFacilityEvent;
+import org.matsim.core.api.experimental.events.VehicleDepartsAtFacilityEvent;
+import org.matsim.core.api.experimental.events.handler.VehicleArrivesAtFacilityEventHandler;
+import org.matsim.core.api.experimental.events.handler.VehicleDepartsAtFacilityEventHandler;
+import org.matsim.core.mobsim.qsim.pt.TransitVehicle;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
-public class PTExtendedVehicleEventHandler implements PersonEntersVehicleEventHandler{
+// Goal: nPersons use line in Base Case.
+// nPersons who enter or leave bus within Frohnau
+public class PTExtendedVehicleEventHandler implements PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler {
+
+
+	Set<Id<Vehicle>> vehSave = new HashSet<>();
 
 	private final Event enterVehicleEvent;
 	
@@ -35,6 +49,8 @@ public class PTExtendedVehicleEventHandler implements PersonEntersVehicleEventHa
 		TransitSchedule transitSchedule = scenario.getTransitSchedule();
 		
 		Set<String> linesToConsider = new HashSet<>(Arrays.asList("17306_700", "17354_700", "17476_700"));
+
+
 		
 		
 		// Identify relevant vehicles
@@ -57,14 +73,10 @@ public class PTExtendedVehicleEventHandler implements PersonEntersVehicleEventHa
 	
 	public boolean isPTVehicle(PersonEntersVehicleEvent event) {
 		// TODO Auto-generated method stub
-		
-		if(event.getVehicleId().toString().startsWith("tr")) {
-			
-			return true;
-		}
-		
-		return false;
-	}
+
+        return event.getVehicleId().toString().startsWith("tr");
+
+    }
 
 
 	@Override
@@ -73,4 +85,26 @@ public class PTExtendedVehicleEventHandler implements PersonEntersVehicleEventHa
 		
 	}
 
+
+	@Override
+	public void handleEvent(PersonLeavesVehicleEvent personLeavesVehicleEvent) {
+
+	}
+
+
+	// adds vehicle to buffer if 1) stop occurs in frohnau and 2) vehicle is one of the pt vehicles from the bus lines in question.
+	@Override
+	public void handleEvent(VehicleArrivesAtFacilityEvent vehicleArrivesAtFacilityEvent) {
+		Id<Vehicle> vehId = vehicleArrivesAtFacilityEvent.getVehicleId();
+		// if...
+
+		vehSave.add(vehId);
+
+	}
+
+	@Override
+	public void handleEvent(VehicleDepartsAtFacilityEvent vehicleDepartsAtFacilityEvent) {
+		Id<Vehicle> vehId = vehicleDepartsAtFacilityEvent.getVehicleId();
+        vehSave.remove(vehId);
+	}
 }
