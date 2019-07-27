@@ -2,6 +2,7 @@ package main.analysis;
 
 
 
+import main.utils.MyUtils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
@@ -40,9 +41,17 @@ class AnalysePlans {
 
         String popBase = rootPath + "Input_global/plans/berlin-plans-10pct-frohnau-scrubbed.xml.gz";
         String popPolicy = rootPath + "2019-07-23/05_FullRun/output/berlin-v5.4-10pct.output_plans.xml.gz";
+        String subpopPath = rootPath+ "/analysis/impactedAgents.txt ";
+        String outputFile = "" ;
         String popInput = "" ;
-        String outputFile = rootPath + "analysis/plansAnalysis.txt";
+
 //        String VehWithinRingBase = rootPath + ".\\output\\VehWithinRingBase.txt";
+
+        ArrayList<String> impactedAgents = MyUtils.readLinksFile(subpopPath) ;
+        boolean subpopFilter = true ;
+
+        if (subpopFilter) outputFile = rootPath + "analysis/plansAnalysisSubpop.txt";
+        else outputFile = rootPath + "analysis/plansAnalysisFull.txt";
 
 
         BufferedWriter bw = IOUtils.getBufferedWriter(outputFile);
@@ -61,9 +70,7 @@ class AnalysePlans {
 
             final Population pop = sc.getPopulation();
 
-//        ArrayList<String> vehWithinRing = MyUtils.readLinksFile(VehWithinRingBase.toString()) ;
-
-
+            long nAgents = 0 ;
             long nCarLegs = 0 ;
             long nPtLegs = 0 ;
             long nZoomerLegs = 0;
@@ -74,6 +81,11 @@ class AnalysePlans {
             double totalDistance = 0 ;
 
             for ( Person person : pop.getPersons().values() ) {
+                if (subpopFilter) {
+                    if (!impactedAgents.contains(person.getId().toString())) continue;
+                }
+
+                nAgents ++ ;
                 boolean carUser = false ;
                 Plan plan = person.getSelectedPlan() ;
 //                for (TripStructureUtils.Subtour pe : TripStructureUtils.getSubtours(plan, new StageActivityTypesImpl())){
@@ -107,22 +119,22 @@ class AnalysePlans {
                 if ( carUser ) nCarUsingPersons++ ;
             }
             bw.newLine();
-            bw.write(pop.getPersons().size() + "," + nCarLegs + "," + 1.*nCarLegs/pop.getPersons().size()+ "," +
+            bw.write(nAgents + "," + nCarLegs + "," + 1.*nCarLegs/pop.getPersons().size()+ "," +
                     nCarUsingPersons + "," + nPtLegs + "," + totalCarDistance/1000 + "," + totalPtDistance/1000 + "," +
                     nZoomerLegs + "," + totalZoomerDistance/1000 + "," + totalDistance/1000);
 
             // could the people walk further to pt stops in the past?
 
 
-//            System.out.println( "Number of persons = " + pop.getPersons().size() ) ;
-//            System.out.println( "Number of car legs = " + nCarLegs ) ;
-//            System.out.println( "Number of car legs per person = " + 1.*nCarLegs/pop.getPersons().size() ) ;
-//            System.out.println( "Number of car using persons = " + nCarUsingPersons ) ;
-//            System.out.println( "Number of pt legs = " + nPtLegs ) ;
-//            System.out.println( "Total Driving Distance = " + totalCarDistance/1000 ) ;
-//            System.out.println( "Total Pt Distance = " + totalPtDistance/1000) ;
-//            System.out.println( "Number of zoomer legs = " + nZoomerLegs);
-//            System.out.println( "Total Zoomer Distance = " + totalZoomerDistance/1000 ) ;
+            System.out.println( "Number of persons = " + nAgents) ;
+            System.out.println( "Number of car legs = " + nCarLegs ) ;
+            System.out.println( "Number of car legs per person = " + 1.*nCarLegs/pop.getPersons().size() ) ;
+            System.out.println( "Number of car using persons = " + nCarUsingPersons ) ;
+            System.out.println( "Number of pt legs = " + nPtLegs ) ;
+            System.out.println( "Total Driving Distance = " + totalCarDistance/1000 ) ;
+            System.out.println( "Total Pt Distance = " + totalPtDistance/1000) ;
+            System.out.println( "Number of zoomer legs = " + nZoomerLegs);
+            System.out.println( "Total Zoomer Distance = " + totalZoomerDistance/1000 ) ;
 
         }
 

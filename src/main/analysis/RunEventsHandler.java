@@ -18,30 +18,18 @@
  * *********************************************************************** */
 package main.analysis;
 
+import main.utils.MyUtils;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.scenario.ScenarioUtils;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RunEventsHandler {
-//	static Path inputNetwork = Paths.get("C:\\Users\\jakob\\Dropbox\\Documents\\Education-TUB\\2019_SS\\MATSim\\HA1\\input\\be_5_network_with-pt-ride-freight.xml") ;
-//	static Path inputEventsBase = Paths.get("C:\\Users\\jakob\\Dropbox\\Documents\\Education-TUB\\2019_SS\\MATSim\\HA1\\web_output\\berlin-v5.3-1pct.output_events.xml.gz");
-//	static Path inputEventsTempo30 = Paths.get("C:\\Users\\jakob\\Dropbox\\Documents\\Education-TUB\\2019_SS\\MATSim\\HA1\\tempo30Case\\output\\ITERS\\it.200\\berlin-v5.3-1pct.200.events.xml.gz");
-//	static Path outputCarDistBase = Paths.get(".\\output\\carDistancesBase.txt");
-//	static Path outputCarDistTempo30 = Paths.get(".\\output\\carDistancesTempo30.txt");
-//	static Path LinksWithinRing = Paths.get(".\\output\\LinksWithinRing.txt");
-//	private static Path VehWithinRingBase = Paths.get(".\\output\\VehWithinRingBase.txt");
-//	private static Path VehWithinRingTempo30 = Paths.get(".\\output\\VehWithinRingTempo30.txt");
 	
 	public static void main(String[] args) {
 
@@ -95,13 +83,15 @@ public class RunEventsHandler {
 		// Run Event Handlers
 		{
 				new MatsimEventsReader(managerBase).readFile(eventsBase);
-				new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
+//				new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
 		}
 
 
 
 		// Subpopulation
 		ArrayList<Id<Person>> impactedAgents = ptHandler.getImpactedAgents();
+		List<String> impactedAgentsString = impactedAgents.stream().map(x -> x.toString()).collect(Collectors.toList());
+		MyUtils.writeArrayListString(impactedAgentsString,rootPath+ "/analysis/impactedAgents.txt");
 		int nImpactedAgents = ptHandler.getnImpactedAgents();
 
 		System.out.println(" Number of Impacted Agents: " + nImpactedAgents);
@@ -122,12 +112,13 @@ public class RunEventsHandler {
 		double subpopTotalTTBase = TravelTimesBase.entrySet().stream()
 				.filter(x -> impactedAgents.contains(x.getKey()))
 				.mapToDouble(d -> d.getValue()).sum();
-		System.out.println(subpopTotalTTBase);
+		System.out.println("time subpop (base) = " + subpopTotalTTBase/3600.);
+
 
 		double subpopTotalTTPolicy = TravelTimesPolicy.entrySet().stream()
 				.filter(x -> impactedAgents.contains(x.getKey()))
 				.mapToDouble(d -> d.getValue()).sum();
-		System.out.println(subpopTotalTTPolicy);
+		System.out.println("time subpop (policy) = " + subpopTotalTTPolicy/3600.);
 
 
 
