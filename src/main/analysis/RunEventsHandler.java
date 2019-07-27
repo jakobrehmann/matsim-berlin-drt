@@ -67,55 +67,71 @@ public class RunEventsHandler {
 //		ArrayList<String> vehWithinRing = MyUtils.readLinksFile(VehWithinRingBase.toString()) ;
 
 		//Initialize Managers
-//		EventsManager managerBase = EventsUtils.createEventsManager();
-//		EventsManager managerPolicy = EventsUtils.createEventsManager();
+		EventsManager managerBase = EventsUtils.createEventsManager();
+		EventsManager managerPolicy = EventsUtils.createEventsManager();
 //
 //
 //		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 //		new MatsimNetworkReader(scenario.getNetwork()).readFile(inputNetwork);
 
-		// Travel Time
-//		{
-//			TravelTimeEventHandler timeHandlerBase = new TravelTimeEventHandler() ;
-//			timeHandlerBase.setFrohnauAgents(agentsWithinFrohnauFilename);
-//			managerBase.addHandler(timeHandlerBase);
-//
-//			double totalTravelTimeBase = timeHandlerBase.computeOverallTravelTime() ;
-//			System.out.println("time (base) = " + totalTravelTimeBase/3600 + " hours") ;
-//
-//			TravelTimeEventHandler timeHandlerPolicy = new TravelTimeEventHandler() ;
-//			timeHandlerPolicy.setFrohnauAgents(agentsWithinFrohnauFilename);
-//			managerPolicy.addHandler(timeHandlerPolicy);
-//
-//			double totalTravelTimePolicy = timeHandlerPolicy.computeOverallTravelTime() ;
-//			System.out.println("time (policy) = " + totalTravelTimePolicy/3600 + " hours") ;
-//		}
+
 
 		// Impacted Bus Agents
-		{
-			PTExtendedVehicleEventHandler ptHandler = new PTExtendedVehicleEventHandler();
-			EventsManager managerBase = EventsUtils.createEventsManager();
-			managerBase.addHandler(ptHandler);
-			new MatsimEventsReader(managerBase).readFile(eventsBase); // this line always has to come after Handler is added to manager
+		PTExtendedVehicleEventHandler ptHandler = new PTExtendedVehicleEventHandler();
+		managerBase.addHandler(ptHandler);
 
+		// Travel Time
 
+		TravelTimeEventHandler timeHandlerBase = new TravelTimeEventHandler() ;
+		timeHandlerBase.setFrohnauAgents(agentsWithinFrohnauFilename);
+		managerBase.addHandler(timeHandlerBase);
 
-			ArrayList<Id<Person>> impactedAgents = ptHandler.getImpactedAgents();
-			int nImpactedAgents = ptHandler.getnImpactedAgents();
+		TravelTimeEventHandler timeHandlerPolicy = new TravelTimeEventHandler() ;
+		timeHandlerPolicy.setFrohnauAgents(agentsWithinFrohnauFilename);
+		managerPolicy.addHandler(timeHandlerPolicy);
 
-
-			System.out.println(" Number of Impacted Agents: " + nImpactedAgents);
-			System.out.println(" Size of Impacted Agents Set: " + impactedAgents.size());
-			System.out.println(" Veh Save Array Size: " + ptHandler.getVehSave().size());
-
-		}
 
 
 		// Run Event Handlers
 		{
-			//	new MatsimEventsReader(managerBase).readFile(eventsBase);
-			//	new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
+				new MatsimEventsReader(managerBase).readFile(eventsBase);
+				new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
 		}
+
+
+
+		// Subpopulation
+		ArrayList<Id<Person>> impactedAgents = ptHandler.getImpactedAgents();
+		int nImpactedAgents = ptHandler.getnImpactedAgents();
+
+		System.out.println(" Number of Impacted Agents: " + nImpactedAgents);
+		System.out.println(" Size of Impacted Agents Set: " + impactedAgents.size());
+		System.out.println(" Veh Save Array Size: " + ptHandler.getVehSave().size());
+
+
+		// Travel Time
+		double totalTravelTimeBase = timeHandlerBase.computeOverallTravelTime() ;
+		System.out.println("time (base) = " + totalTravelTimeBase/3600 + " hours") ;
+
+		double totalTravelTimePolicy = timeHandlerPolicy.computeOverallTravelTime() ;
+		System.out.println("time (policy) = " + totalTravelTimePolicy/3600 + " hours") ;
+
+		Map<Id<Person>, Double> TravelTimesBase = timeHandlerBase.getTravelTimeByAgent();
+		Map<Id<Person>, Double> TravelTimesPolicy = timeHandlerPolicy.getTravelTimeByAgent();
+
+		double subpopTotalTTBase = TravelTimesBase.entrySet().stream()
+				.filter(x -> impactedAgents.contains(x.getKey()))
+				.mapToDouble(d -> d.getValue()).sum();
+		System.out.println(subpopTotalTTBase);
+
+		double subpopTotalTTPolicy = TravelTimesPolicy.entrySet().stream()
+				.filter(x -> impactedAgents.contains(x.getKey()))
+				.mapToDouble(d -> d.getValue()).sum();
+		System.out.println(subpopTotalTTPolicy);
+
+
+
+
 
 		// Car Distance Evaluator
 //		{

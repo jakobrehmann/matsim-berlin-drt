@@ -21,6 +21,7 @@ public class TravelTimeEventHandler
 	private final Map<Id<Person>, Double> travelTimebyAgent = new HashMap<>();
 	private final Map<Id<Person>, ActivityEndEvent> openTrips = new HashMap<>();
 	private final ArrayList<Id<Person>> frohnauAgents = new ArrayList<>();
+	private ArrayList<Id<Person>> impactedAgents = new ArrayList<>();
 
 	Map<Id<Person>, Double> getTravelTimeByAgent() {
 		return travelTimebyAgent;
@@ -34,7 +35,6 @@ public class TravelTimeEventHandler
 	public void setFrohnauAgents(String path) {
 
 			Scanner s ;
-//			ArrayList<String> list = new ArrayList<String>();
 			try {
 				s = new Scanner(new File(path));
 				while (s.hasNext()){
@@ -44,9 +44,6 @@ public class TravelTimeEventHandler
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
-
-
-
 		}
 
 	@Override
@@ -70,4 +67,7 @@ public class TravelTimeEventHandler
 		return !activityType.contains("interaction");
 	}
 
+	public void setSubpopulation(ArrayList<Id<Person>> impactedAgents) {
+		this.impactedAgents = impactedAgents ;
+	}
 }
