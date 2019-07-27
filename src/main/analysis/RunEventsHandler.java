@@ -66,45 +66,58 @@ public class RunEventsHandler {
 //		ArrayList<String> linksWithinRing = MyUtils.readLinksFile(LinksWithinRing.toString()) ;
 //		ArrayList<String> vehWithinRing = MyUtils.readLinksFile(VehWithinRingBase.toString()) ;
 
-		//Initialization
-		EventsManager managerBase = EventsUtils.createEventsManager();
-		new MatsimEventsReader(managerBase).readFile(eventsBase);
-		EventsManager managerPolicy = EventsUtils.createEventsManager();
-		new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
-
-
-		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		new MatsimNetworkReader(scenario.getNetwork()).readFile(inputNetwork);
+		//Initialize Managers
+//		EventsManager managerBase = EventsUtils.createEventsManager();
+//		EventsManager managerPolicy = EventsUtils.createEventsManager();
+//
+//
+//		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+//		new MatsimNetworkReader(scenario.getNetwork()).readFile(inputNetwork);
 
 		// Travel Time
-		{
-			TravelTimeEventHandler timeHandlerBase = new TravelTimeEventHandler() ;
-			timeHandlerBase.setFrohnauAgents(agentsWithinFrohnauFilename);
-			managerBase.addHandler(timeHandlerBase);
-
-			double totalTravelTimeBase = timeHandlerBase.computeOverallTravelTime() ;
-			System.out.println("time (base) = " + totalTravelTimeBase/3600 + " hours") ;
-
-			TravelTimeEventHandler timeHandlerPolicy = new TravelTimeEventHandler() ;
-			timeHandlerPolicy.setFrohnauAgents(agentsWithinFrohnauFilename);
-			managerPolicy.addHandler(timeHandlerPolicy);
-
-			double totalTravelTimePolicy = timeHandlerPolicy.computeOverallTravelTime() ;
-			System.out.println("time (policy) = " + totalTravelTimePolicy/3600 + " hours") ;
-
-//			// For Subpopulation
-//			Map<Id<Person>, Double> travelTimeByAgent = timeHandler.getTravelTimeByAgent() ;
-//			double subPopTravelTimeTotal = 0. ;
+//		{
+//			TravelTimeEventHandler timeHandlerBase = new TravelTimeEventHandler() ;
+//			timeHandlerBase.setFrohnauAgents(agentsWithinFrohnauFilename);
+//			managerBase.addHandler(timeHandlerBase);
 //
-//			for (Id<Person> per : travelTimeByAgent.keySet()) {
-//				if (vehWithinRing.contains(per.toString())) {
-//					subPopTravelTimeTotal += travelTimeByAgent.get(per);
-//				}
-//			}
-//			System.out.println("Subpop time = " + subPopTravelTimeTotal/3600 + " hours") ;
+//			double totalTravelTimeBase = timeHandlerBase.computeOverallTravelTime() ;
+//			System.out.println("time (base) = " + totalTravelTimeBase/3600 + " hours") ;
+//
+//			TravelTimeEventHandler timeHandlerPolicy = new TravelTimeEventHandler() ;
+//			timeHandlerPolicy.setFrohnauAgents(agentsWithinFrohnauFilename);
+//			managerPolicy.addHandler(timeHandlerPolicy);
+//
+//			double totalTravelTimePolicy = timeHandlerPolicy.computeOverallTravelTime() ;
+//			System.out.println("time (policy) = " + totalTravelTimePolicy/3600 + " hours") ;
+//		}
+
+		// Impacted Bus Agents
+		{
+			PTExtendedVehicleEventHandler ptHandler = new PTExtendedVehicleEventHandler();
+			EventsManager managerBase = EventsUtils.createEventsManager();
+			managerBase.addHandler(ptHandler);
+			new MatsimEventsReader(managerBase).readFile(eventsBase); // this line always has to come after Handler is added to manager
+
+
+
+			ArrayList<Id<Person>> impactedAgents = ptHandler.getImpactedAgents();
+			int nImpactedAgents = ptHandler.getnImpactedAgents();
+
+
+			System.out.println(" Number of Impacted Agents: " + nImpactedAgents);
+			System.out.println(" Size of Impacted Agents Set: " + impactedAgents.size());
+			System.out.println(" Veh Save Array Size: " + ptHandler.getVehSave().size());
 
 		}
-		// Car Distance Evaluator 
+
+
+		// Run Event Handlers
+		{
+			//	new MatsimEventsReader(managerBase).readFile(eventsBase);
+			//	new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
+		}
+
+		// Car Distance Evaluator
 //		{
 //			CarTravelDistanceEvaluator carTravelDistanceEvaluator = new CarTravelDistanceEvaluator(scenario.getNetwork(), linksWithinRing);
 //			manager.addHandler(carTravelDistanceEvaluator);
