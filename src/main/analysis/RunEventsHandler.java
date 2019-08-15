@@ -83,7 +83,7 @@ public class RunEventsHandler {
 		// Run Event Handlers
 		{
 				new MatsimEventsReader(managerBase).readFile(eventsBase);
-//				new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
+				new MatsimEventsReader(managerPolicy).readFile(eventsPolicy);
 		}
 
 

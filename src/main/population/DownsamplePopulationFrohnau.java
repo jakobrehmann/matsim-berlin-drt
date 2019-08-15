@@ -101,9 +101,7 @@ public class DownsamplePopulationFrohnau {
                     Coord coord = activity.getCoord();
                     String actType = activity.getType() ;
                     if ((geometries.stream().anyMatch(geom -> geom.contains(MGC.coord2Point(coord))))
-                            && (!actType.contains("car"))
-                            && (!actType.contains("pt"))
-                            && (!actType.contains("ride"))) {
+                            && (!actType.contains("interaction"))){
                         agentsOutsideFrohnau.remove(person.getId().toString());
                         agentsWithinFrohnau.add(person.getId().toString());
                         pop2.addPerson(person);
