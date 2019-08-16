@@ -41,7 +41,9 @@ import java.util.*;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
-/** A drt mode is added to the Berlin Scenario. In its current implementation, the drt fleet has a service area limited
+/** **************** THIS RUN CLASS IS NOT USED ************************************
+ *  **************** USE RunBerlinZoomer INSTEAD ***********************************
+ * A drt mode is added to the Berlin Scenario. In its current implementation, the drt fleet has a service area limited
  * to the neighborhood of Frohnau. This scenario can be extended to have multiple fleets, with seperate service areas.
  * TODO: Get access_walk and egress_walk out of the code. Deprecated
  * TODO: NetworkChangeEvents do not appear in events

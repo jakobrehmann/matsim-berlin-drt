@@ -38,7 +38,9 @@ import java.util.Scanner;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 
-/** drt is used as an access/egress mode for a pt modes. Not yet functional. These are the next steps:
+/** **************** THIS RUN CLASS IS NOT USED ************************************
+ *  **************** USE RunBerlinZoomer INSTEAD ***********************************
+ * drt is used as an access/egress mode for a pt modes. Not yet functional. These are the next steps:
  * 1) get drt running, so that agents begin to use drt to access/egress from pt
  * 2) limit this functionality to Frohnau.
  */

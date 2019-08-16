@@ -70,9 +70,7 @@ public class RunBerlinZoomer {
 
         // -- C O N F I G --
         //        String configFileName = rootPath + "Input_global/berlin-v5.4-1pct.config.xml";
-//        String configFileName = rootPath + "Input_global/berlin-v5.4-10pct.config.xml";
-
-        String configFileName = rootPath + "Input_global/berlin-config-ReRoute.xml";
+        String configFileName = rootPath + "Input_global/berlin-v5.4-10pct.config.xml";
         Config config = ConfigUtils.loadConfig( configFileName);
 
         
@@ -81,17 +79,11 @@ public class RunBerlinZoomer {
         config.plans().setInputFile("plans/berlin-plans-10pct-frohnau-scrubbed.xml.gz");
         config.plans().setInputPersonAttributeFile("berlin-v5-person-attributes.xml.gz");
         config.vehicles().setVehiclesFile("berlin-v5-mode-vehicle-types.xml");
-        
-        //Take the adjusted transit schedule for Test
-//        config.transit().setTransitScheduleFile("berlin-v5-transit-schedule.xml.gz");
         config.transit().setTransitScheduleFile("berlin-v5-transit-schedule_Adjusted.xml.gz");
-    
         config.transit().setVehiclesFile("berlin-v5.4-transit-vehicles.xml.gz");
 
         String outputDirectory = rootPath + version + "/output/";
         new File(outputDirectory).mkdirs();
-
-//        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.failIfDirectoryExists);
 
         config.controler().setLastIteration(10);
         config.global().setNumberOfThreads( 1 );
@@ -149,18 +141,14 @@ public class RunBerlinZoomer {
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
 
-//         Network Change Events
+        // Network Change Events
         config.network().setTimeVariantNetwork(true);
         config.network().setChangeEventsInputFile(rootPath + "Input_global/networkChangeEvents-10pct.xml.gz");
-
-//
-//        config.plansCalcRoute().removeModeRoutingParams(TransportMode.egress_walk);
-//        config.plansCalcRoute().removeModeRoutingParams(TransportMode.access_walk);
 
         // -- S C E N A R I O --
         Scenario scenario = ScenarioUtils.loadScenario( config );
 
-        //Adds zoomerAccessible Attribute to Transit Schedule
+        // Adds zoomerAccessible Attribute to Transit Schedule
         ArrayList<String> frohnauStops = readFile(rootPath + "Input_global/FrohnauStopFacilities.txt") ;
         for (String stop : frohnauStops) {
             Id<TransitStopFacility> stopId = Id.create(stop, TransitStopFacility.class);
@@ -186,8 +174,6 @@ public class RunBerlinZoomer {
             }
         } );
 
-
-
 //        TransitScheduleValidator.ValidationResult validationResult = TransitScheduleValidator.validateAll(scenario.getTransitSchedule(), scenario.getNetwork());
 //        TransitScheduleValidator.printResult(validationResult);
         new ConfigWriter(scenario.getConfig()).write(rootPath + version + "/configTest.xml");
@@ -205,7 +191,7 @@ public class RunBerlinZoomer {
         paramSetWalk.setPersonFilterAttribute(null);
         paramSetWalk.setStopFilterAttribute(null);
         configRaptor.addIntermodalAccessEgress(paramSetWalk );
-////
+
         // Access Walk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetWalkA = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetWalkA.setMode(TransportMode.access_walk);
