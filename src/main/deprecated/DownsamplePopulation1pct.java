@@ -1,4 +1,4 @@
-package main.population;
+package main.deprecated;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.ConfigUtils;

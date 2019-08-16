@@ -1,4 +1,4 @@
-package main.run;
+package main.deprecated;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
